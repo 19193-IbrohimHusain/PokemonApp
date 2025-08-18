@@ -73,9 +73,9 @@ This project's folder structure is designed for modularity and separation of con
 
 ### Domain
 
-- **Entity**: Protocol definitions that abstract database and repository behavior.
+- **Entity**: Core business entities represented as simple Swift structs.
   
-- **UseCase**: Provides networking, and local database implementations.
+- **UseCase**: Encapsulates application-specific business logic.
 
 ### Presentation
 

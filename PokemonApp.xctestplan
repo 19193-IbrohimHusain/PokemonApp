@@ -1,0 +1,46 @@
+{
+  "configurations" : [
+    {
+      "id" : "4652828F-51C0-4E80-9D66-1041942EC0E7",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : {
+      "targets" : [
+        {
+          "containerPath" : "container:PokemonApp.xcodeproj",
+          "identifier" : "361B92892E4DBD660037E309",
+          "name" : "PokemonApp"
+        }
+      ]
+    },
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:PokemonApp.xcodeproj",
+      "identifier" : "361B92892E4DBD660037E309",
+      "name" : "PokemonApp"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:PokemonApp.xcodeproj",
+        "identifier" : "361B929F2E4DBD700037E309",
+        "name" : "PokemonAppTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:PokemonApp.xcodeproj",
+        "identifier" : "361B92A92E4DBD700037E309",
+        "name" : "PokemonAppUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

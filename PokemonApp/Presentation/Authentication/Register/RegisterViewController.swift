@@ -1,0 +1,294 @@
+//
+//  RegisterViewController.swift
+//  PokemonApp
+//
+//  Created by Ibrohim Husain on 14/08/25.
+//
+
+import UIKit
+import SnapKit
+import RxSwift
+import RxCocoa
+import MBProgressHUD
+
+final class RegisterViewController: BaseViewController {
+    private let containerImage = UIView()
+    
+    private let pokeballImage = UIImageView().configure {
+        $0.image = UIImage(named: "Pokeball")
+        $0.contentMode = .scaleAspectFit
+    }
+    
+    private let titleLabel = UILabel().configure {
+        $0.font = .systemFont(ofSize: 24, weight: .semibold)
+        $0.text = "Pokemon App"
+    }
+    
+    private let loginLabel = UILabel().configure {
+        $0.font = .systemFont(ofSize: 18, weight: .semibold)
+        $0.text = "Register"
+    }
+    
+    private let usernameField = FormTextField().configure {
+        $0.placeholder = "Name"
+    }
+    
+    private let emailField = FormTextField().configure {
+        $0.placeholder = "Email"
+    }
+    
+    private let passwordField = FormTextField().configure {
+        $0.placeholder = "Password"
+        $0.isSecureTextEntry = true
+        $0.rightViewMode = .always
+    }
+    
+    private let confirmPasswordField = FormTextField().configure {
+        $0.placeholder = "Confirm Password"
+        $0.isSecureTextEntry = true
+        $0.rightViewMode = .always
+    }
+    
+    private let rightViewPasswordField = UIView(frame: CGRectMake(0, 0, 40, 40))
+    private let rightViewConfirmPasswordField = UIView(frame: CGRectMake(0, 0, 40, 40))
+    private let showPasswordImage = UIImageView(image: UIImage(systemName: "eye.fill"))
+    private let showConfirmPasswordImage = UIImageView(image: UIImage(systemName: "eye.fill"))
+    
+    private let signUpBtn = UIButton(type: .system).configure {
+        $0.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
+        $0.setTitleColor(.white, for: .normal)
+        $0.setTitle("Sign Up", for: .normal)
+        $0.setCornerRadius(radius: 12)
+        $0.setBorder(1, color: .white)
+        $0.backgroundColor = .systemBlue
+    }
+    
+    private let infoLabel = UILabel().configure {
+        $0.font = .systemFont(ofSize: 14, weight: .regular)
+        $0.text = "already have an account?"
+    }
+    
+    private let signInBtn = UIButton(type: .system).configure {
+        $0.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
+        $0.setTitleColor(.systemBlue, for: .normal)
+        $0.setTitle("Sign In", for: .normal)
+        $0.backgroundColor = .clear
+    }
+        
+    private let viewModel = RegisterViewModel()
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupViews()
+        setConstraints()
+        bindEvent()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.navigationBar.hidden()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.navigationBar.visible()
+    }
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        view.endEditing(true)
+        super.touchesBegan(touches, with: event)
+    }
+    
+    private func setupViews() {
+        view.backgroundColor = .systemBackground
+        view.addSubviews(containerImage, titleLabel, loginLabel, usernameField, emailField, passwordField, confirmPasswordField, signInBtn, infoLabel, signUpBtn)
+        containerImage.addSubview(pokeballImage)
+        rightViewPasswordField.addSubview(showPasswordImage)
+        showPasswordImage.center = CGPointMake(rightViewPasswordField.width / 2, rightViewPasswordField.height / 2)
+        passwordField.rightView = rightViewPasswordField
+        rightViewConfirmPasswordField.addSubview(showConfirmPasswordImage)
+        showConfirmPasswordImage.center = CGPointMake(rightViewConfirmPasswordField.width / 2, rightViewConfirmPasswordField.height / 2)
+        confirmPasswordField.rightView = rightViewConfirmPasswordField
+        usernameField.delegate = self
+        emailField.delegate = self
+        passwordField.delegate = self
+        confirmPasswordField.delegate = self
+    }
+    
+    private func setConstraints() {
+        containerImage.snp.makeConstraints {
+            $0.top.equalTo(view.safeAreaLayoutGuide)
+            $0.horizontalEdges.equalToSuperview().inset(100)
+            $0.height.equalTo(Screen.width - 100 - 100)
+        }
+        pokeballImage.snp.makeConstraints {
+            $0.center.equalToSuperview()
+            $0.size.equalTo(100)
+        }
+        titleLabel.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.top.equalTo(containerImage.snp.bottom).inset(20)
+        }
+        loginLabel.snp.makeConstraints {
+            $0.leading.equalToSuperview().inset(16)
+            $0.top.equalTo(titleLabel.snp.bottom).inset(-16)
+        }
+        usernameField.snp.makeConstraints {
+            $0.top.equalTo(loginLabel.snp.bottom).inset(-10)
+            $0.horizontalEdges.equalToSuperview().inset(16)
+            $0.height.equalTo(50)
+        }
+        emailField.snp.makeConstraints {
+            $0.top.equalTo(usernameField.snp.bottom).inset(-16)
+            $0.horizontalEdges.equalToSuperview().inset(16)
+            $0.height.equalTo(50)
+        }
+        passwordField.snp.makeConstraints {
+            $0.top.equalTo(emailField.snp.bottom).inset(-16)
+            $0.horizontalEdges.equalToSuperview().inset(16)
+            $0.height.equalTo(50)
+        }
+        confirmPasswordField.snp.makeConstraints {
+            $0.top.equalTo(passwordField.snp.bottom).inset(-16)
+            $0.horizontalEdges.equalToSuperview().inset(16)
+            $0.height.equalTo(50)
+        }
+        signUpBtn.snp.makeConstraints {
+            $0.top.equalTo(confirmPasswordField.snp.bottom).inset(-26)
+            $0.horizontalEdges.equalToSuperview().inset(50)
+            $0.height.equalTo(40)
+        }
+        infoLabel.snp.makeConstraints {
+            $0.leading.equalTo(signUpBtn).inset(30)
+            $0.top.equalTo(signUpBtn.snp.bottom).inset(-10)
+        }
+        signInBtn.snp.makeConstraints {
+            $0.leading.equalTo(infoLabel.snp.trailing).inset(-4)
+            $0.height.equalTo(17)
+            $0.top.equalTo(signUpBtn.snp.bottom).inset(-10)
+        }
+    }
+    
+    private func bindEvent() {
+        let togglePasswordGesture = UITapGestureRecognizer(target: self, action: #selector(togglePasswordVisibility))
+        rightViewPasswordField.addGestureRecognizer(togglePasswordGesture)
+        let toggleConfirmPasswordGesture = UITapGestureRecognizer(target: self, action: #selector(toggleConfirmPasswordVisibility))
+        rightViewConfirmPasswordField.addGestureRecognizer(toggleConfirmPasswordGesture)
+        
+        signUpBtn.rx.tap
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] in
+                guard let self = self else { return }
+                self.viewModel.loadingState.onNext(.loading)
+                self.validateForm()
+            })
+            .disposed(by: disposeBag)
+        
+        signInBtn.rx.tap
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] in
+                guard let self = self else { return }
+                self.navigateToLoginView()
+            })
+            .disposed(by: disposeBag)
+        
+        viewModel.loadingState
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] in
+                guard let self = self else { return }
+                switch $0 {
+                case .loading:
+                    MBProgressHUD.showAdded(to: self.view, animated: true)
+                case .finished:
+                    MBProgressHUD.hide(for: self.view, animated: true)
+                    self.showAlertAndNavigateToLoginView()
+                default:
+                    MBProgressHUD.hide(for: self.view, animated: true)
+                }
+            })
+            .disposed(by: disposeBag)
+            
+        viewModel.displayAlert
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] in
+                guard let self = self else { return }
+                self.displayAlert(title: $0.title, message: $0.message)
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    @objc
+    private func togglePasswordVisibility() {
+        passwordField.isSecureTextEntry.toggle()
+        showPasswordImage.image = UIImage(systemName: passwordField.isSecureTextEntry ? "eye.fill" : "eye.slash.fill")
+    }
+    
+    @objc
+    private func toggleConfirmPasswordVisibility() {
+        confirmPasswordField.isSecureTextEntry.toggle()
+        showConfirmPasswordImage.image = UIImage(systemName: confirmPasswordField.isSecureTextEntry ? "eye.fill" : "eye.slash.fill")
+    }
+    
+    private func validateForm() {
+        guard let name = self.usernameField.text, !name.isEmpty else {
+            self.viewModel.loadingState.onNext(.failed)
+            self.viewModel.displayAlert.onNext(("Sign Up Failed", "Please Enter Your Name"))
+            return
+        }
+        
+        guard let email = self.emailField.text, !email.isEmpty, self.viewModel.validateEmail(candidate: email) else {
+            self.viewModel.loadingState.onNext(.failed)
+            self.viewModel.displayAlert.onNext(("Sign Up Failed", "Please Enter Valid Email"))
+            return
+        }
+        
+        guard let password = self.passwordField.text, !password.isEmpty, self.viewModel.validatePassword(candidate: password) else {
+            self.viewModel.loadingState.onNext(.failed)
+            self.viewModel.displayAlert.onNext(("Sign Up Failed", "Please Enter Valid Password"))
+            return
+        }
+        
+        guard let confirmPassword = self.confirmPasswordField.text, !confirmPassword.isEmpty, confirmPassword == password else {
+            self.viewModel.loadingState.onNext(.failed)
+            self.viewModel.displayAlert.onNext(("Sign Up Failed", "Confirmed Password is not the same as Password you entered"))
+            return
+        }
+        
+        self.viewModel.register(name: name, email: email, password: password)
+    }
+    
+    private func showAlertAndNavigateToLoginView() {
+        self.displayAlert(title: "Sign Up Success!", message: "Please Sign In To Proceed", actionHandler: { _ in
+            self.navigateToLoginView()
+        })
+    }
+    
+    private func navigateToLoginView() {
+        self.navigationController?.popViewController(animated: true)
+    }
+}
+
+extension RegisterViewController: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        textField.setBorder(1, color: .systemGray4)
+        if textField.isEqual(usernameField) {
+            emailField.becomeFirstResponder()
+        } else if textField.isEqual(emailField) {
+            passwordField.becomeFirstResponder()
+        } else if textField.isEqual(passwordField) {
+            confirmPasswordField.becomeFirstResponder()
+        }
+        return false
+    }
+    
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        textField.resignFirstResponder()
+        textField.setBorder(1, color: .systemGray4)
+    }
+    
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        textField.setBorder(1, color: .systemBlue)
+    }
+}
+

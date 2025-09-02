@@ -5,14 +5,14 @@
 //  Created by Ibrohim Husain on 14/08/25.
 //
 
-import RxSwift
+import Combine
 
 protocol PokemonUseCase {
-    func fetchListPokemon(limit: Int, offset: Int) -> Single<[PokemonDetailModel]>
+    func fetchListPokemon(limit: Int, offset: Int) -> AnyPublisher<[PokemonDetailModel], Error>
     func fetchListPokemonCache() -> [PokemonDetailModel]
-    func fetchDetailPokemon(of name: String) -> Single<PokemonDetailModel>
-    func fetchPokemonSpecies(of name: String) -> Single<PokemonSpecies>
-    func fetchPokemonType(for type: String) -> Single<PokemonType>
+    func fetchDetailPokemon(of name: String) -> AnyPublisher<PokemonDetailModel, Error>
+    func fetchPokemonSpecies(of name: String) -> AnyPublisher<PokemonSpecies, Error>
+    func fetchPokemonType(for type: String) -> AnyPublisher<PokemonType, Error>
     func fetchFavoritePokemon() -> [PokemonDetailModel]
     func fetchFavoritePokemon(by name: String) -> PokemonDetailModel?
     func saveFavoritePokemon(_ pokemon: PokemonDetailModel) -> Bool
@@ -26,7 +26,7 @@ final class PokemonUseCaseImpl: PokemonUseCase {
         self.repository = repository
     }
     
-    func fetchListPokemon(limit: Int, offset: Int) -> Single<[PokemonDetailModel]> {
+    func fetchListPokemon(limit: Int, offset: Int) -> AnyPublisher<[PokemonDetailModel], Error> {
         repository.fetchListPokemon(limit: limit, offset: offset)
     }
     
@@ -34,15 +34,15 @@ final class PokemonUseCaseImpl: PokemonUseCase {
         repository.fetchListPokemonCache()
     }
     
-    func fetchDetailPokemon(of name: String) -> Single<PokemonDetailModel> {
+    func fetchDetailPokemon(of name: String) -> AnyPublisher<PokemonDetailModel, Error> {
         repository.fetchDetailPokemon(of: name)
     }
     
-    func fetchPokemonSpecies(of name: String) -> Single<PokemonSpecies> {
+    func fetchPokemonSpecies(of name: String) -> AnyPublisher<PokemonSpecies, Error> {
         repository.fetchPokemonSpecies(of: name)
     }
     
-    func fetchPokemonType(for type: String) -> Single<PokemonType> {
+    func fetchPokemonType(for type: String) -> AnyPublisher<PokemonType, Error> {
         repository.fetchPokemonType(for: type)
     }
     

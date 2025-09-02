@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 
 extension UIView {
     func visible() {
@@ -157,5 +158,20 @@ extension UIView {
         set {
             frame.size.width = newValue
         }
+    }
+    
+    func tapPublisher(configure: ((UITapGestureRecognizer) -> Void)? = nil) -> AnyPublisher<UITapGestureRecognizer, Never> {
+        let tap = UITapGestureRecognizer()
+        configure?(tap)
+        isUserInteractionEnabled = true
+        addGestureRecognizer(tap)
+        
+        return tap.publisher
+            .handleEvents(receiveCancel: { [weak self, weak tap] in
+                guard let tap = tap else { return }
+                self?.removeGestureRecognizer(tap)
+            })
+            .compactMap { $0 as? UITapGestureRecognizer }
+            .eraseToAnyPublisher()
     }
 }

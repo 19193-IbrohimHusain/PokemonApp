@@ -8,8 +8,6 @@ target 'PokemonApp' do
   # Pods for PokemonApp
   pod 'Alamofire'
   pod 'SnapKit'
-  pod 'RxSwift'
-  pod 'RxCocoa'
   pod 'Kingfisher'
   pod 'MBProgressHUD'
   pod 'XLPagerTabStrip'
@@ -18,8 +16,6 @@ target 'PokemonApp' do
   target 'PokemonAppTests' do
     inherit! :search_paths
     # Pods for testing
-  pod 'RxTest'
-  pod 'RxBlocking'
   end
 
   target 'PokemonAppUITests' do

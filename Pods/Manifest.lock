@@ -3,16 +3,6 @@ PODS:
   - CouchbaseLite-Swift (3.2.4)
   - Kingfisher (8.3.2)
   - MBProgressHUD (1.2.0)
-  - RxBlocking (6.9.0):
-    - RxSwift (= 6.9.0)
-  - RxCocoa (6.9.0):
-    - RxRelay (= 6.9.0)
-    - RxSwift (= 6.9.0)
-  - RxRelay (6.9.0):
-    - RxSwift (= 6.9.0)
-  - RxSwift (6.9.0)
-  - RxTest (6.9.0):
-    - RxSwift (= 6.9.0)
   - SnapKit (5.7.1)
   - XLPagerTabStrip (9.1.0)
 
@@ -21,10 +11,6 @@ DEPENDENCIES:
   - CouchbaseLite-Swift
   - Kingfisher
   - MBProgressHUD
-  - RxBlocking
-  - RxCocoa
-  - RxSwift
-  - RxTest
   - SnapKit
   - XLPagerTabStrip
 
@@ -34,11 +20,6 @@ SPEC REPOS:
     - CouchbaseLite-Swift
     - Kingfisher
     - MBProgressHUD
-    - RxBlocking
-    - RxCocoa
-    - RxRelay
-    - RxSwift
-    - RxTest
     - SnapKit
     - XLPagerTabStrip
 
@@ -47,14 +28,9 @@ SPEC CHECKSUMS:
   CouchbaseLite-Swift: 1d52b46b01918a84f43240ef23c90bae6d3dd837
   Kingfisher: 0621d0ac0c78fecb19f6dc5303bde2b52abaf2f5
   MBProgressHUD: 3ee5efcc380f6a79a7cc9b363dd669c5e1ae7406
-  RxBlocking: 5d2b26d019b6ba9eb3f58638611f124609c44822
-  RxCocoa: ac16414696ae706516be3e1ab00fcce5bdc9be8a
-  RxRelay: 6b0c930e5cef57d5fe2032571e5e65b78e3cbdb1
-  RxSwift: 31649ace6aceeb422e16ff71c60804f9c3281ed9
-  RxTest: fa7749822359a10a19b9fa32b80dbe608e4ce44e
   SnapKit: d612e99e678a2d3b95bf60b0705ed0a35c03484a
   XLPagerTabStrip: 27f3bfe23c53b4251c6481b06b1c289458a3fc1d
 
-PODFILE CHECKSUM: dbde84fcd74903b3f510065da666ef41ceb980a0
+PODFILE CHECKSUM: 7fed04f1e2318b7f3facf238900c878d2338c8da
 
 COCOAPODS: 1.16.2

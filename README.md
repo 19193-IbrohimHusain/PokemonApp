@@ -14,7 +14,7 @@ Experiment App. Built with Swift & UIKit
 
 - Swift 5
 - MVVM + Clean Architecture
-- RxSwift – reactive programming for async handling
+- Combine – reactive programming for async handling
 - Alamofire – networking layer
 - Kingfisher – fast image downloading & caching
 - MBProgressHUD – elegant loading indicators

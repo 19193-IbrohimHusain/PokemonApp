@@ -5,7 +5,8 @@
 //  Created by Ibrohim Husain on 15/08/25.
 //
 
-import RxSwift
+import Foundation
+import Combine
 
 enum LoadingState {
     case idle
@@ -15,9 +16,10 @@ enum LoadingState {
 }
 
 class BaseViewModel {
-    internal let loadingState = PublishSubject<LoadingState>()
-    internal let displayAlert = PublishSubject<(title: String, message: String)>()
-    internal let disposeBag = DisposeBag()
+    internal let loadingState = PassthroughSubject<LoadingState, Never>()
+    internal let displayAlert = PassthroughSubject<(title: String, message: String), Never>()
+    internal var cancellables = Set<AnyCancellable>()
+    internal let backgroundQueue = DispatchQueue(label: "com.pokemonApp.backgroundQueue", qos: .background, attributes: .concurrent)
     
     internal func validateEmail(candidate: String) -> Bool {
         let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"

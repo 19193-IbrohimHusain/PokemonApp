@@ -6,10 +6,10 @@
 //
 
 import UIKit
-import RxSwift
+import Combine
 
 class BaseViewController: UIViewController {
-    internal let disposeBag = DisposeBag()
+    internal var cancellables = Set<AnyCancellable>()
     
     internal func displayAlert(
         title: String,

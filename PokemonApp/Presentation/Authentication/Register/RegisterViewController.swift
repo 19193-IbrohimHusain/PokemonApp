@@ -7,8 +7,6 @@
 
 import UIKit
 import SnapKit
-import RxSwift
-import RxCocoa
 import MBProgressHUD
 
 final class RegisterViewController: BaseViewController {
@@ -170,31 +168,46 @@ final class RegisterViewController: BaseViewController {
     }
     
     private func bindEvent() {
-        let togglePasswordGesture = UITapGestureRecognizer(target: self, action: #selector(togglePasswordVisibility))
-        rightViewPasswordField.addGestureRecognizer(togglePasswordGesture)
-        let toggleConfirmPasswordGesture = UITapGestureRecognizer(target: self, action: #selector(toggleConfirmPasswordVisibility))
-        rightViewConfirmPasswordField.addGestureRecognizer(toggleConfirmPasswordGesture)
-        
-        signUpBtn.rx.tap
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] in
+        rightViewPasswordField
+            .tapPublisher()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
                 guard let self = self else { return }
-                self.viewModel.loadingState.onNext(.loading)
+                self.togglePasswordVisibility()
+            }
+            .store(in: &cancellables)
+        
+        rightViewConfirmPasswordField
+            .tapPublisher()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                self.toggleConfirmPasswordVisibility()
+            }
+            .store(in: &cancellables)
+        
+        signUpBtn
+            .publisher(for: .touchUpInside)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                guard let self else { return }
+                self.viewModel.loadingState.send(.loading)
                 self.validateForm()
-            })
-            .disposed(by: disposeBag)
+            }
+            .store(in: &cancellables)
         
-        signInBtn.rx.tap
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] in
-                guard let self = self else { return }
+        signInBtn
+            .publisher(for: .touchUpInside)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                guard let self else { return }
                 self.navigateToLoginView()
-            })
-            .disposed(by: disposeBag)
+            }
+            .store(in: &cancellables)
         
         viewModel.loadingState
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] in
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in
                 guard let self = self else { return }
                 switch $0 {
                 case .loading:
@@ -205,25 +218,23 @@ final class RegisterViewController: BaseViewController {
                 default:
                     MBProgressHUD.hide(for: self.view, animated: true)
                 }
-            })
-            .disposed(by: disposeBag)
+            }
+            .store(in: &cancellables)
             
         viewModel.displayAlert
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] in
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in
                 guard let self = self else { return }
                 self.displayAlert(title: $0.title, message: $0.message)
-            })
-            .disposed(by: disposeBag)
+            }
+            .store(in: &cancellables)
     }
     
-    @objc
     private func togglePasswordVisibility() {
         passwordField.isSecureTextEntry.toggle()
         showPasswordImage.image = UIImage(systemName: passwordField.isSecureTextEntry ? "eye.fill" : "eye.slash.fill")
     }
     
-    @objc
     private func toggleConfirmPasswordVisibility() {
         confirmPasswordField.isSecureTextEntry.toggle()
         showConfirmPasswordImage.image = UIImage(systemName: confirmPasswordField.isSecureTextEntry ? "eye.fill" : "eye.slash.fill")
@@ -231,26 +242,26 @@ final class RegisterViewController: BaseViewController {
     
     private func validateForm() {
         guard let name = self.usernameField.text, !name.isEmpty else {
-            self.viewModel.loadingState.onNext(.failed)
-            self.viewModel.displayAlert.onNext(("Sign Up Failed", "Please Enter Your Name"))
+            self.viewModel.loadingState.send(.failed)
+            self.viewModel.displayAlert.send(("Sign Up Failed", "Please Enter Your Name"))
             return
         }
         
         guard let email = self.emailField.text, !email.isEmpty, self.viewModel.validateEmail(candidate: email) else {
-            self.viewModel.loadingState.onNext(.failed)
-            self.viewModel.displayAlert.onNext(("Sign Up Failed", "Please Enter Valid Email"))
+            self.viewModel.loadingState.send(.failed)
+            self.viewModel.displayAlert.send(("Sign Up Failed", "Please Enter Valid Email"))
             return
         }
         
         guard let password = self.passwordField.text, !password.isEmpty, self.viewModel.validatePassword(candidate: password) else {
-            self.viewModel.loadingState.onNext(.failed)
-            self.viewModel.displayAlert.onNext(("Sign Up Failed", "Please Enter Valid Password"))
+            self.viewModel.loadingState.send(.failed)
+            self.viewModel.displayAlert.send(("Sign Up Failed", "Please Enter Valid Password"))
             return
         }
         
         guard let confirmPassword = self.confirmPasswordField.text, !confirmPassword.isEmpty, confirmPassword == password else {
-            self.viewModel.loadingState.onNext(.failed)
-            self.viewModel.displayAlert.onNext(("Sign Up Failed", "Confirmed Password is not the same as Password you entered"))
+            self.viewModel.loadingState.send(.failed)
+            self.viewModel.displayAlert.send(("Sign Up Failed", "Confirmed Password is not the same as Password you entered"))
             return
         }
         

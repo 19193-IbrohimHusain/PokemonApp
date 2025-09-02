@@ -7,8 +7,6 @@
 
 import UIKit
 import SnapKit
-import RxSwift
-import RxCocoa
 import MBProgressHUD
 
 final class LoginViewController: BaseViewController {
@@ -144,29 +142,37 @@ final class LoginViewController: BaseViewController {
     }
     
     private func bindEvent() {
-        let gesture = UITapGestureRecognizer(target: self, action: #selector(togglePasswordVisibility))
-        rightViewPasswordField.addGestureRecognizer(gesture)
-        
-        signInBtn.rx.tap
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] in
+        rightViewPasswordField
+            .tapPublisher()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
                 guard let self = self else { return }
-                self.viewModel.loadingState.onNext(.loading)
+                self.togglePasswordVisibility()
+            }
+            .store(in: &cancellables)
+        
+        signInBtn
+            .publisher(for: .touchUpInside)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                guard let self else { return }
+                self.viewModel.loadingState.send(.loading)
                 self.validateForm()
-            })
-            .disposed(by: disposeBag)
+            }
+            .store(in: &cancellables)
         
-        signUpBtn.rx.tap
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] in
-                guard let self = self else { return }
+        signUpBtn
+            .publisher(for: .touchUpInside)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                guard let self else { return }
                 self.navigateToRegisterView()
-            })
-            .disposed(by: disposeBag)
+            }
+            .store(in: &cancellables)
         
         viewModel.loadingState
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] in
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in
                 guard let self = self else { return }
                 switch $0 {
                 case .loading:
@@ -177,19 +183,18 @@ final class LoginViewController: BaseViewController {
                 default:
                     MBProgressHUD.hide(for: self.view, animated: true)
                 }
-            })
-            .disposed(by: disposeBag)
+            }
+            .store(in: &cancellables)
             
         viewModel.displayAlert
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] in
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in
                 guard let self = self else { return }
                 self.displayAlert(title: $0.title, message: $0.message)
-            })
-            .disposed(by: disposeBag)
+            }
+            .store(in: &cancellables)
     }
     
-    @objc
     private func togglePasswordVisibility() {
         passwordField.isSecureTextEntry.toggle()
         showPasswordImage.image = UIImage(systemName: passwordField.isSecureTextEntry ? "eye.fill" : "eye.slash.fill")
@@ -197,14 +202,14 @@ final class LoginViewController: BaseViewController {
     
     private func validateForm() {
         guard let email = self.emailField.text, !email.isEmpty, self.viewModel.validateEmail(candidate: email) else {
-            self.viewModel.loadingState.onNext(.failed)
-            self.viewModel.displayAlert.onNext(("Sign In Failed", "Please Enter Valid Email"))
+            self.viewModel.loadingState.send(.failed)
+            self.viewModel.displayAlert.send(("Sign In Failed", "Please Enter Valid Email"))
             return
         }
         
         guard let password = self.passwordField.text, !password.isEmpty, self.viewModel.validatePassword(candidate: password) else {
-            self.viewModel.loadingState.onNext(.failed)
-            self.viewModel.displayAlert.onNext(("Sign In Failed", "Please Enter Valid Password"))
+            self.viewModel.loadingState.send(.failed)
+            self.viewModel.displayAlert.send(("Sign In Failed", "Please Enter Valid Password"))
             return
         }
         

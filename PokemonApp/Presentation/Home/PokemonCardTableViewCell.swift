@@ -7,7 +7,6 @@
 
 import UIKit
 import SnapKit
-import RxSwift
 import Kingfisher
 
 final class PokemonCardTableViewCell: BaseTableViewCell {
@@ -51,7 +50,6 @@ final class PokemonCardTableViewCell: BaseTableViewCell {
     }
     
     private var isFavorite = false
-    private let disposeBag = DisposeBag()
     private var pokemonType = [TypeElement]()
     
     internal var toggleFavorite: ((Bool) -> Void)?
@@ -118,12 +116,7 @@ final class PokemonCardTableViewCell: BaseTableViewCell {
     }
     
     private func bindEvent() {
-        favoriteIcon.rx.tap
-            .subscribe(onNext: { [weak self] in
-                guard let self = self else { return }
-                self.addFavorites()
-            })
-            .disposed(by: disposeBag)
+        favoriteIcon.addTarget(self, action: #selector(addFavorites), for: .touchUpInside)
     }
     
     @objc

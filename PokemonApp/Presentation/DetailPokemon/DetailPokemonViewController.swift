@@ -7,7 +7,6 @@
 
 import UIKit
 import SnapKit
-import RxSwift
 import MBProgressHUD
 
 enum DetailPokemonSection: Int, CaseIterable {
@@ -61,8 +60,8 @@ final class DetailPokemonViewController: BaseViewController {
     
     private func bindEvent() {
         viewModel.loadingState
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] in
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in
                 guard let self = self else { return }
                 switch $0 {
                 case .loading:
@@ -73,8 +72,8 @@ final class DetailPokemonViewController: BaseViewController {
                 default:
                     MBProgressHUD.hide(for: self.view, animated: true)
                 }
-            })
-            .disposed(by: disposeBag)
+            }
+            .store(in: &cancellables)
     }
     
     @objc

@@ -5,7 +5,7 @@
 //  Created by Ibrohim Husain on 15/08/25.
 //
 
-import RxSwift
+import Foundation
 
 final class HomeViewModel: BaseViewModel {
     private let useCase: PokemonUseCase
@@ -17,20 +17,24 @@ final class HomeViewModel: BaseViewModel {
     }
     
     internal func fetchPokemonList(limit: Int = 10, offset: Int = 10) {
-        loadingState.onNext(.loading)
+        loadingState.send(.loading)
         useCase.fetchListPokemon(limit: limit, offset: self.offset)
-            .subscribe(on: ConcurrentDispatchQueueScheduler(qos: .background))
-            .observe(on: MainScheduler.instance)
-            .subscribe(onSuccess: { [weak self] in
-                guard let self = self else { return }
+            .subscribe(on: backgroundQueue)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] completion in
+                guard let self else { return }
+                switch completion {
+                case .finished:
+                    self.loadingState.send(.finished)
+                case .failure:
+                    self.loadingState.send(.failed)
+                }
+            } receiveValue: { [weak self] in
+                guard let self else { return }
                 self.pokemonList.append(contentsOf: $0)
                 self.offset += offset
-                self.loadingState.onNext(.finished)
-            }, onFailure: { [weak self] _ in
-                guard let self = self else { return }
-                self.loadingState.onNext(.failed)
-            })
-            .disposed(by: disposeBag)
+            }
+            .store(in: &cancellables)
     }
     
     internal func isPokemonFavorite(_ data: PokemonDetailModel) -> Bool {

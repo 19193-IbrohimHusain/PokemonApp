@@ -5,8 +5,6 @@
 //  Created by Ibrohim Husain on 18/08/25.
 //
 
-import RxSwift
-
 final class FavoritePokemonViewModel: BaseViewModel {
     private let useCase: PokemonUseCase
     private var offset = 0
@@ -17,9 +15,9 @@ final class FavoritePokemonViewModel: BaseViewModel {
     }
     
     internal func fetchPokemonList() {
-        loadingState.onNext(.loading)
+        loadingState.send(.loading)
         pokemonList = useCase.fetchFavoritePokemon()
-        loadingState.onNext(.idle)
+        loadingState.send(.idle)
     }
     
     @discardableResult

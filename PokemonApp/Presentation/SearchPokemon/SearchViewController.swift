@@ -7,8 +7,7 @@
 
 import UIKit
 import SnapKit
-import RxSwift
-import RxCocoa
+import Combine
 
 final class SearchViewController: BaseViewController {
     private let searchBar = UISearchBar().configure {
@@ -57,8 +56,8 @@ final class SearchViewController: BaseViewController {
         viewModel.bindSearchSubject()
         
         viewModel.loadingState
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] in
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in
                 guard let self = self else { return }
                 switch $0 {
                 case .finished:
@@ -66,13 +65,17 @@ final class SearchViewController: BaseViewController {
                 default:
                     break
                 }
-            })
-            .disposed(by: disposeBag)
+            }
+            .store(in: &cancellables)
         
-        searchBar.rx.text
-            .observe(on: MainScheduler.instance)
-            .bind(to: viewModel.searchQuery)
-            .disposed(by: disposeBag)
+        NotificationCenter.default.publisher(
+            for: UITextField.textDidChangeNotification,
+            object: searchBar.searchTextField
+        )
+        .map { ($0.object as? UISearchTextField)?.text }
+        .receive(on: RunLoop.main)
+        .subscribe(viewModel.searchQuery)
+        .store(in: &cancellables)
     }
     
     private func navigateToDetailPokemon(with pokemon: PokemonDetailModel) {

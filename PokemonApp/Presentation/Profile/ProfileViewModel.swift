@@ -5,11 +5,12 @@
 //  Created by Ibrohim Husain on 15/08/25.
 //
 
-import RxSwift
+import UIKit
+import Combine
 
 final class ProfileViewModel: BaseViewModel {
     private let useCase: AuthUseCase
-    internal let userData = PublishSubject<User>()
+    internal let userData = PassthroughSubject<User, Never>()
     internal let defaultCellIdentifier = "defaultCellIdentifier"
     internal let menuData = [
         (icon: SFSymbols.editProfile, title: "Edit Profile", tint: UIColor.systemBlue),
@@ -22,32 +23,32 @@ final class ProfileViewModel: BaseViewModel {
     }
     
     internal func fetchCurrentUser() {
-        loadingState.onNext(.loading)
-        defer { loadingState.onNext(.idle) }
+        loadingState.send(.loading)
+        defer { loadingState.send(.idle) }
         guard let user = ActiveUserHelper.shared.user else {
-            userData.onNext(User(name: "Guest"))
+            userData.send(User(name: "Guest"))
             return
         }
-        userData.onNext(user)
+        userData.send(user)
     }
     
     internal func logout() {
-        loadingState.onNext(.loading)
+        loadingState.send(.loading)
         useCase.logout()
-            .subscribe(on: MainScheduler.instance)
-            .observe(on: MainScheduler.instance)
-            .subscribe(onSuccess: { [weak self] in
+            .subscribe(on: RunLoop.main)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in
                 guard let self = self else { return }
-                self.loadingState.onNext(.finished)
-            }, onFailure: { [weak self] in
-                guard let self = self else { return }
-                self.loadingState.onNext(.failed)
-                if let error = $0 as? AuthError, error == .invalidCredential {
-                    self.displayAlert.onNext(("Sign In Failed", "Your email or password is incorrect. Please try again."))
-                } else {
-                    self.displayAlert.onNext(("Sign In Failed", "Please double-check your email and password, or sign up if you're new here."))
+                switch $0 {
+                case .finished:
+                    self.loadingState.send(.finished)
+                case .failure:
+                    self.loadingState.send(.failed)
+                    self.displayAlert.send(("Logout Failed", "Sorry, something went wrong on our end. Please try again later."))
                 }
-            })
-            .disposed(by: disposeBag)
+            } receiveValue: { [weak self] in
+                guard let _ = self else { return }
+            }
+            .store(in: &cancellables)
     }
 }

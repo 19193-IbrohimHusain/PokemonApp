@@ -5,7 +5,8 @@
 //  Created by Ibrohim Husain on 16/08/25.
 //
 
-import RxSwift
+import Foundation
+import Combine
 
 final class DetailPokemonViewModel: BaseViewModel {
     private let useCase: PokemonUseCase
@@ -20,37 +21,44 @@ final class DetailPokemonViewModel: BaseViewModel {
     
     internal func fetchAdditionalDetail() {
         guard let data = dataDetail, let type = data.types.first?.type.name else { return }
-        loadingState.onNext(.loading)
-        Single.zip(
+        loadingState.send(.loading)
+        
+        Publishers.Zip(
             useCase.fetchPokemonSpecies(of: data.name),
             useCase.fetchPokemonType(for: type)
         )
-        .subscribe(on: ConcurrentDispatchQueueScheduler(qos: .background))
-        .observe(on: MainScheduler.instance)
-        .subscribe(onSuccess: { [weak self]  in
-            guard let self = self else { return }
-            self.pokemonTrivia = $0.0.englishFlavorText
-            self.pokemonGenera = $0.0.englishGenus
+        .subscribe(on: backgroundQueue)
+        .receive(on: RunLoop.main)
+        .sink { [weak self] in
+            guard let self else { return }
+            switch $0 {
+            case .finished:
+                self.loadingState.send(.finished)
+            case .failure:
+                self.loadingState.send(.failed)
+            }
+        } receiveValue: { [weak self] in
+            guard let self else { return }
+            self.pokemonTrivia = $0.englishFlavorText
+            self.pokemonGenera = $0.englishGenus
+            
             let height = data.height / 10
             let weight = data.weight / 10
             let abilities = data.abilities.map { $0.ability.name.capitalized }.joined(separator: ", ")
             let moves = data.moves.map { $0.move.name.capitalized }.prefix(2).joined(separator: ", ")
-            let weakness = $0.1.weakness?.capitalized
+            let weakness = $1.weakness?.capitalized
+            
             self.pokemonInfo = [
                 ("Height", "\(height) m", false),
                 ("Weight", "\(weight) kg", false),
                 ("Abilities", abilities, false),
-                ("Moves", moves, false),
+                ("Moves", moves, false)
             ]
-            if let weakness = weakness {
-                self.pokemonInfo.append(("Weakness", weakness, true))
-            }
-            self.loadingState.onNext(.finished)
-        }, onFailure: { [weak self] _ in
-            guard let self = self else { return }
-            self.loadingState.onNext(.failed)
-        })
-        .disposed(by: disposeBag)
+            
+            guard let weakness else { return }
+            self.pokemonInfo.append(("Weakness", weakness, true))
+        }
+        .store(in: &cancellables)
     }
     
     internal func isPokemonFavorite() -> Bool {

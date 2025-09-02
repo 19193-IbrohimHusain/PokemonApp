@@ -6,7 +6,6 @@
 //
 
 import UIKit
-import RxSwift
 import SnapKit
 import MBProgressHUD
 import XLPagerTabStrip
@@ -72,17 +71,17 @@ final class ProfileViewController: BaseViewController {
     
     private func bindEvent() {
         viewModel.userData
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] in
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in
                 guard let self = self else { return }
                 self.usernameLabel.text = $0.name
                 self.emailLabel.text = $0.email
-            })
-            .disposed(by: disposeBag)
+            }
+            .store(in: &cancellables)
         
         viewModel.loadingState
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] in
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in
                 guard let self = self else { return }
                 switch $0 {
                 case .loading:
@@ -93,16 +92,16 @@ final class ProfileViewController: BaseViewController {
                 default:
                     MBProgressHUD.hide(for: self.view, animated: true)
                 }
-            })
-            .disposed(by: disposeBag)
+            }
+            .store(in: &cancellables)
             
         viewModel.displayAlert
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] in
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in
                 guard let self = self else { return }
                 self.displayAlert(title: $0.title, message: $0.message)
-            })
-            .disposed(by: disposeBag)
+            }
+            .store(in: &cancellables)
     }
     
     private func navigateToLogin() {

@@ -5,13 +5,14 @@
 //  Created by Ibrohim Husain on 17/08/25.
 //
 
-import RxSwift
+import Foundation
+import Combine
 
 final class SearchViewModel: BaseViewModel {
     private let useCase: PokemonUseCase
     internal var pokemonList = [PokemonDetailModel]()
     internal var searchResult = [PokemonDetailModel]()
-    internal let searchQuery = PublishSubject<String?>()
+    internal let searchQuery = PassthroughSubject<String?, Never>()
     
     init(useCase: PokemonUseCase = PokemonUseCaseImpl()) {
         self.useCase = useCase
@@ -25,23 +26,20 @@ final class SearchViewModel: BaseViewModel {
     
     internal func bindSearchSubject() {
         searchQuery
-            .observe(on: MainScheduler.instance)
-            .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
-            .distinctUntilChanged()
-            .flatMapLatest { [weak self] query -> Observable<[PokemonDetailModel]> in
-                guard let self = self else { return .just([]) }
-                
-                guard let query = query, !query.isEmpty else { return .just(self.pokemonList) }
-                let result = self.pokemonList.filter { $0.name.lowercased().contains(query.lowercased()) }
-
-                return .just(result)
+            .receive(on: RunLoop.main)
+            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+            .removeDuplicates()
+            .map { [weak self] query -> [PokemonDetailModel] in
+                guard let self else { return [] }
+                guard let q = query, !q.isEmpty else { return self.pokemonList }
+                return self.pokemonList.filter { $0.name.lowercased().contains(q.lowercased()) }
             }
-            .subscribe(onNext: { [weak self] in
+            .sink { [weak self] in
                 guard let self = self else { return }
                 self.searchResult = $0
-                self.loadingState.onNext(.finished)
-            })
-            .disposed(by: disposeBag)
+                self.loadingState.send(.finished)
+            }
+            .store(in: &cancellables)
     }
     
     internal func isPokemonFavorite(_ data: PokemonDetailModel) -> Bool {

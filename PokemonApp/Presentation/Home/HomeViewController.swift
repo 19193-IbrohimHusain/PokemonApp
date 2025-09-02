@@ -7,7 +7,6 @@
 
 import UIKit
 import SnapKit
-import RxSwift
 import MBProgressHUD
 import XLPagerTabStrip
 
@@ -44,8 +43,8 @@ final class HomeViewController: BaseViewController {
     
     private func bindEvent() {
         viewModel.loadingState
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] in
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in
                 guard let self = self else { return }
                 switch $0 {
                 case .loading where viewModel.pokemonList.isEmpty:
@@ -56,8 +55,8 @@ final class HomeViewController: BaseViewController {
                 default:
                     MBProgressHUD.hide(for: self.view, animated: true)
                 }
-            })
-            .disposed(by: disposeBag)
+            }
+            .store(in: &cancellables)
     }
     
     private func navigateToDetailPokemon(with pokemon: PokemonDetailModel) {

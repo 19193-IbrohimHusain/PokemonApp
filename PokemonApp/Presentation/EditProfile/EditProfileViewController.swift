@@ -7,7 +7,6 @@
 
 import UIKit
 import SnapKit
-import RxSwift
 
 final class EditProfileViewController: BaseViewController {
     override func viewDidLoad() {

@@ -7,7 +7,6 @@
 
 import UIKit
 import SnapKit
-import RxSwift
 import MBProgressHUD
 
 final class FavoritePokemonViewController: BaseViewController {
@@ -38,8 +37,8 @@ final class FavoritePokemonViewController: BaseViewController {
     
     private func bindEvent() {
         viewModel.loadingState
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] in
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in
                 guard let self = self else { return }
                 switch $0 {
                 case .loading:
@@ -48,8 +47,8 @@ final class FavoritePokemonViewController: BaseViewController {
                     MBProgressHUD.hide(for: self.view, animated: true)
                     self.tableView.reloadData()
                 }
-            })
-            .disposed(by: disposeBag)
+            }
+            .store(in: &cancellables)
     }
     
     private func navigateToDetailPokemon(with pokemon: PokemonDetailModel) {

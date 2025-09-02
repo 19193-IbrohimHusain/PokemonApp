@@ -5,13 +5,14 @@
 //  Created by Ibrohim Husain on 14/08/25.
 //
 
-import RxSwift
+import Combine
+import Security
 
 protocol AuthService {
-    func register(_ user: User) -> Single<Void>
-    func login(_ user: User) -> Single<Void>
+    func register(_ user: User) -> AnyPublisher<Void, Error>
+    func login(_ user: User) -> AnyPublisher<Void, Error>
     func currentUser() -> User?
-    func logout() -> Single<Void>
+    func logout() -> AnyPublisher<Void, Error>
 }
 
 enum AuthError: Error {
@@ -31,39 +32,38 @@ final class AuthRepository: AuthService {
         self.keychain = keychain
     }
 
-    func register(_ user: User) -> Single<Void> {
-        Single.create { [weak self] single in
-            guard let self = self else { return Disposables.create() }
+    func register(_ user: User) -> AnyPublisher<Void, Error> {
+        Publishers.Single<Void, Error> { [weak self] promise in
+            guard let self = self else { return }
             guard self.db.fetchUser(user.email) == nil else {
-                single(.failure(AuthError.userExist))
-                return Disposables.create()
+                promise(.failure(AuthError.userExist))
+                return
             }
             
             do {
                 let passwordHash = HashHelper.hashSHA256(user.password)
                 let newUser = User(email: user.email, name: user.name, password: passwordHash)
                 try self.db.saveUser(newUser)
-                single(.success(()))
+                promise(.success(()))
             } catch {
-                single(.failure(error))
+                promise(.failure(error))
             }
-            
-            return Disposables.create()
         }
+        .eraseToAnyPublisher()
     }
 
-    func login(_ user: User) -> Single<Void> {
-        Single.create { [weak self] single in
-            guard let self = self else { return Disposables.create() }
+    func login(_ user: User) -> AnyPublisher<Void, Error> {
+        Publishers.Single<Void, Error> { [weak self] promise in
+            guard let self = self else { return }
             
             guard let localUser = self.db.fetchUser(user.email) else {
-                single(.failure(AuthError.userNotExist))
-                return Disposables.create()
+                promise(.failure(AuthError.userNotExist))
+                return
             }
             
             guard HashHelper.hashSHA256(user.password) == localUser.password else {
-                single(.failure(AuthError.invalidCredential))
-                return Disposables.create()
+                promise(.failure(AuthError.invalidCredential))
+                return
             }
             
             guard self.keychain.setString(
@@ -71,14 +71,14 @@ final class AuthRepository: AuthService {
                 for: self.sessionKey,
                 accessible: kSecAttrAccessibleAfterFirstUnlock
             ) else {
-                single(.failure(AuthError.unknownError))
-                return Disposables.create()
+                promise(.failure(AuthError.unknownError))
+                return
             }
             
             ActiveUserHelper.shared.user = User(email: localUser.email, name: localUser.name)
-            single(.success(()))
-            return Disposables.create()
+            promise(.success(()))
         }
+        .eraseToAnyPublisher()
     }
 
     func currentUser() -> User? {
@@ -86,17 +86,16 @@ final class AuthRepository: AuthService {
         return User(email: user.email, name: user.name)
     }
 
-    func logout() -> Single<Void> {
-        Single.create { [weak self] single in
-            guard let self = self else { return Disposables.create() }
+    func logout() -> AnyPublisher<Void, Error> {
+        Publishers.Single<Void, Error> { [weak self] promise in
+            guard let self = self else { return }
             let successDelete = self.keychain.delete(self.sessionKey)
             if successDelete {
-                single(.success(()))
+                promise(.success(()))
             } else {
-                single(.failure(AuthError.unknownError))
+                promise(.failure(AuthError.unknownError))
             }
-            
-            return Disposables.create()
         }
+        .eraseToAnyPublisher()
     }
 }

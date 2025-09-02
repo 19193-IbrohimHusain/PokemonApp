@@ -5,14 +5,14 @@
 //  Created by Ibrohim Husain on 14/08/25.
 //
 
-import RxSwift
+import Combine
 
 protocol PokemonDataSource {
-    func fetchListPokemon(limit: Int, offset: Int) -> Single<[PokemonDetailModel]>
+    func fetchListPokemon(limit: Int, offset: Int) -> AnyPublisher<[PokemonDetailModel], Error>
     func fetchListPokemonCache() -> [PokemonDetailModel]
-    func fetchDetailPokemon(of name: String) -> Single<PokemonDetailModel>
-    func fetchPokemonSpecies(of name: String) -> Single<PokemonSpecies>
-    func fetchPokemonType(for type: String) -> Single<PokemonType>
+    func fetchDetailPokemon(of name: String) -> AnyPublisher<PokemonDetailModel, Error>
+    func fetchPokemonSpecies(of name: String) -> AnyPublisher<PokemonSpecies, Error>
+    func fetchPokemonType(for type: String) -> AnyPublisher<PokemonType, Error>
     func fetchFavoritePokemon(of user: String) -> [PokemonDetailModel]
     func fetchFavoritePokemon(of user: String, by name: String) -> PokemonDetailModel?
     func saveFavoritePokemon(of user: String, value: PokemonDetailModel) -> Bool
@@ -37,33 +37,34 @@ final class PokemonRepository: PokemonDataSource {
         self.favDb = favDB
     }
     
-    func fetchListPokemon(limit: Int, offset: Int) -> Single<[PokemonDetailModel]> {
-        let list: Single<PokemonResponse> = manager.fetchDecodable(
-            .listPokemon(limit: limit, offset: offset),
-            timeout: 60
-        )
+    func fetchListPokemon(limit: Int, offset: Int) -> AnyPublisher<[PokemonDetailModel], Error> {
+        let list: AnyPublisher<PokemonResponse, Error> = manager.fetchDecodable(.listPokemon(limit: limit, offset: offset), timeout: 60)
         
         var cache = fetchListPokemonCache()
         
-        return list.map { $0.results.map(\.name) }
-            .flatMap { [weak self] names -> Single<[PokemonDetailModel]> in
-                guard let self = self else { return Single.never() }
-                let detailSingles = names.map { self.fetchDetailPokemon(of: $0) }
-                return Single.zip(detailSingles)
+        return list
+            .map { $0.results.map(\.name) }
+            .flatMap { [weak self] names -> AnyPublisher<[PokemonDetailModel], Error> in
+                guard let self else { return Empty().eraseToAnyPublisher() }
+                let detailPublishers = names.map { self.fetchDetailPokemon(of: $0) }
+                return Publishers.ZipMany(detailPublishers).eraseToAnyPublisher()
             }
-            .do(onSuccess: { [weak self] in
-                guard let self = self else { return }
+            .handleEvents(receiveOutput: { [weak self] in
+                guard let self else { return }
                 do {
                     cache.append(contentsOf: $0)
                     let uniqueCache = cache.unique()
                     try self.listDb.saveList(of: uniqueCache)
                 } catch {}
             })
-            .catch { [weak self] in
-                guard let self = self else { return .error($0) }
-                let slice = sliceListPokemonCache(for: limit, offset: offset, cache: cache)
-                return slice.isEmpty ? .error($0) : .just(slice)
+            .catch { [weak self] error -> AnyPublisher<[PokemonDetailModel], Error> in
+                guard let self else { return Fail(error: error).eraseToAnyPublisher() }
+                let slice = self.sliceListPokemonCache(for: limit, offset: offset, cache: cache)
+                return slice.isEmpty
+                ? Fail(error: error).eraseToAnyPublisher()
+                : Just(slice).setFailureType(to: Error.self).eraseToAnyPublisher()
             }
+            .eraseToAnyPublisher()
     }
     
     func fetchListPokemonCache() -> [PokemonDetailModel] {
@@ -82,44 +83,50 @@ final class PokemonRepository: PokemonDataSource {
         return Array(cache[offset..<endExclusive])
     }
     
-    func fetchDetailPokemon(of name: String) -> Single<PokemonDetailModel> {
+    func fetchDetailPokemon(of name: String) -> AnyPublisher<PokemonDetailModel, Error> {
         manager.fetchDecodable(.detailPokemon(name: name), timeout: 60)
     }
     
-    func fetchPokemonSpecies(of name: String) -> Single<PokemonSpecies> {
-        let species: Single<PokemonSpecies> = manager.fetchDecodable(
+    func fetchPokemonSpecies(of name: String) -> AnyPublisher<PokemonSpecies, Error> {
+        let species: AnyPublisher<PokemonSpecies, Error> = manager.fetchDecodable(
             .speciesPokemon(name: name),
             timeout: 60
         )
-        return species.do(onSuccess: { [weak self] in
-            guard let self = self else { return }
-            do {
-                try self.detailDb.savePokemonSpecies(of: name, value: $0)
-            } catch {}
-        })
-        .catch { [weak self] in
-            guard let self = self else { return .error($0) }
-            guard let cache = self.detailDb.fetchPokemonSpecies(of: name) else { return .error($0) }
-            return .just(cache)
-        }
+        
+        return species
+            .handleEvents(receiveOutput: { [weak self] in
+                guard let self = self else { return }
+                do {
+                    try self.detailDb.savePokemonSpecies(of: name, value: $0)
+                } catch {}
+            })
+            .catch { [weak self] error -> AnyPublisher<PokemonSpecies, Error> in
+                guard let self = self else { return Fail(error: error).eraseToAnyPublisher() }
+                guard let cache = self.detailDb.fetchPokemonSpecies(of: name) else { return Fail(error: error).eraseToAnyPublisher() }
+                return Just(cache).setFailureType(to: Error.self).eraseToAnyPublisher()
+            }
+            .eraseToAnyPublisher()
     }
     
-    func fetchPokemonType(for type: String) -> Single<PokemonType> {
-        let typePokemon: Single<PokemonType> = manager.fetchDecodable(
+    func fetchPokemonType(for type: String) -> AnyPublisher<PokemonType, Error> {
+        let typePokemon: AnyPublisher<PokemonType, Error> = manager.fetchDecodable(
             .typeElement(name: type),
             timeout: 60
         )
-        return typePokemon.do(onSuccess: { [weak self] in
-            guard let self = self else { return }
-            do {
-                try self.detailDb.savePokemonType(for: type, value: $0)
-            } catch {}
-        })
-        .catch { [weak self] in
-            guard let self = self else { return .error($0) }
-            guard let cache = self.detailDb.fetchPokemonType(for: type) else { return .error($0) }
-            return .just(cache)
-        }
+        
+        return typePokemon
+            .handleEvents(receiveOutput: { [weak self] in
+                guard let self = self else { return }
+                do {
+                    try self.detailDb.savePokemonType(for: type, value: $0)
+                } catch {}
+            })
+            .catch { [weak self] error -> AnyPublisher<PokemonType, Error> in
+                guard let self = self else { return Fail(error: error).eraseToAnyPublisher() }
+                guard let cache = self.detailDb.fetchPokemonType(for: type) else { return Fail(error: error).eraseToAnyPublisher() }
+                return Just(cache).setFailureType(to: Error.self).eraseToAnyPublisher()
+            }
+            .eraseToAnyPublisher()
     }
     
     func fetchFavoritePokemon(of user: String) -> [PokemonDetailModel] {

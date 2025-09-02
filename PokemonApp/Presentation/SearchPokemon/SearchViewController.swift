@@ -17,7 +17,7 @@ final class SearchViewController: BaseViewController {
     
     private let tableView = UITableView().configure {
         $0.separatorStyle = .none
-        $0.backgroundColor = .systemBackground
+        $0.backgroundColor = .systemGroupedBackground
         $0.showsVerticalScrollIndicator = false
     }
     

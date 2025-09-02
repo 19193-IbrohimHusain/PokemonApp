@@ -64,7 +64,6 @@ final class ParentTabViewController: ButtonBarPagerTabStripViewController {
     @objc
     private func navigateToSearch() {
         let vc = SearchViewController()
-//        vc.setContent(with: home.fetchPokemonList())
         navigationController?.pushViewController(vc, animated: true)
     }
 }

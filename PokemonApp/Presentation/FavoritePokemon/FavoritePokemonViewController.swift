@@ -8,7 +8,6 @@
 import UIKit
 import SnapKit
 import RxSwift
-import MBProgressHUD
 
 final class FavoritePokemonViewController: BaseViewController {
     private let tableView = UITableView().configure {
@@ -43,9 +42,9 @@ final class FavoritePokemonViewController: BaseViewController {
                 guard let self = self else { return }
                 switch $0 {
                 case .loading:
-                    MBProgressHUD.showAdded(to: self.view, animated: true)
+                    LoadingHUD.show(in: self.view)
                 default:
-                    MBProgressHUD.hide(for: self.view, animated: true)
+                    LoadingHUD.hide(from: self.view)
                     self.tableView.reloadData()
                 }
             })

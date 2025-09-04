@@ -17,7 +17,6 @@ Experiment App. Built with Swift & UIKit
 - RxSwift – reactive programming for async handling
 - Alamofire – networking layer
 - Kingfisher – fast image downloading & caching
-- MBProgressHUD – elegant loading indicators
 - XLPagerTabStrip – tab-based navigation with swipeable pages
 - Couchbase Lite – local persistence & offline-first support
 

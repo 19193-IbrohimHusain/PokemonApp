@@ -6,7 +6,6 @@ target 'PokemonApp' do
   use_frameworks!
 
   # Pods for PokemonApp
-  pod 'Alamofire'
   pod 'SnapKit'
   pod 'RxSwift'
   pod 'RxCocoa'

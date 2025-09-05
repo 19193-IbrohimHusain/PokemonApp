@@ -12,7 +12,6 @@ target 'PokemonApp' do
   pod 'RxCocoa'
   pod 'Kingfisher'
   pod 'MBProgressHUD'
-  pod 'XLPagerTabStrip'
   pod 'CouchbaseLite-Swift'
 
   target 'PokemonAppTests' do

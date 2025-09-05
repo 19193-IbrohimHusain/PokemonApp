@@ -6,11 +6,8 @@ target 'PokemonApp' do
   use_frameworks!
 
   # Pods for PokemonApp
-  pod 'Alamofire'
   pod 'SnapKit'
   pod 'Kingfisher'
-  pod 'MBProgressHUD'
-  pod 'XLPagerTabStrip'
   pod 'CouchbaseLite-Swift'
 
   target 'PokemonAppTests' do

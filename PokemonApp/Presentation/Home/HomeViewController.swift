@@ -9,7 +9,6 @@ import UIKit
 import SnapKit
 import RxSwift
 import MBProgressHUD
-import XLPagerTabStrip
 
 final class HomeViewController: BaseViewController {
     private let tableView = UITableView().configure {
@@ -68,12 +67,6 @@ final class HomeViewController: BaseViewController {
     
     internal func fetchPokemonList() -> [PokemonDetailModel] {
         return viewModel.pokemonList
-    }
-}
-
-extension HomeViewController: IndicatorInfoProvider {
-    func indicatorInfo(for pagerTabStripController: PagerTabStripViewController) -> IndicatorInfo {
-        return IndicatorInfo(title: "Home")
     }
 }
 

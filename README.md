@@ -15,11 +15,10 @@ Experiment App. Built with Swift & UIKit
 - Swift 5
 - UIKit
 - MVVM + Clean Architecture
+- SnapKit - a DSL to make Auto Layout easy
 - Combine – reactive programming for async handling
-- Alamofire – networking layer
+- URLSession – networking layer
 - Kingfisher – fast image downloading & caching
-- MBProgressHUD – elegant loading indicators
-- XLPagerTabStrip – tab-based navigation with swipeable pages
 - Couchbase Lite – local persistence & offline-first support
 
 ## Features

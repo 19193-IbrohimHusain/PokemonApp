@@ -7,7 +7,6 @@
 
 import UIKit
 import SnapKit
-import MBProgressHUD
 
 final class LoginViewController: BaseViewController {
     private let containerImage = UIView()
@@ -176,12 +175,12 @@ final class LoginViewController: BaseViewController {
                 guard let self = self else { return }
                 switch $0 {
                 case .loading:
-                    MBProgressHUD.showAdded(to: self.view, animated: true)
+                    LoadingHUD.show(in: self.view)
                 case .finished:
-                    MBProgressHUD.hide(for: self.view, animated: true)
+                    LoadingHUD.show(in: self.view)
                     self.navigateToTabView()
                 default:
-                    MBProgressHUD.hide(for: self.view, animated: true)
+                    LoadingHUD.hide(from: self.view)
                 }
             }
             .store(in: &cancellables)

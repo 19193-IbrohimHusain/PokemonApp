@@ -7,7 +7,6 @@
 
 import UIKit
 import SnapKit
-import MBProgressHUD
 
 enum DetailPokemonSection: Int, CaseIterable {
     case image, trivia, info
@@ -65,12 +64,12 @@ final class DetailPokemonViewController: BaseViewController {
                 guard let self = self else { return }
                 switch $0 {
                 case .loading:
-                    MBProgressHUD.showAdded(to: self.view, animated: true)
+                    LoadingHUD.show(in: self.view)
                 case .finished:
-                    MBProgressHUD.hide(for: self.view, animated: true)
+                    LoadingHUD.hide(from: self.view)
                     self.tableView.reloadData()
                 default:
-                    MBProgressHUD.hide(for: self.view, animated: true)
+                    LoadingHUD.hide(from: self.view)
                 }
             }
             .store(in: &cancellables)

@@ -7,7 +7,6 @@
 
 import UIKit
 import SnapKit
-import MBProgressHUD
 import XLPagerTabStrip
 
 final class ProfileViewController: BaseViewController {
@@ -85,12 +84,12 @@ final class ProfileViewController: BaseViewController {
                 guard let self = self else { return }
                 switch $0 {
                 case .loading:
-                    MBProgressHUD.showAdded(to: self.view, animated: true)
+                    LoadingHUD.show(in: self.view)
                 case .finished:
-                    MBProgressHUD.hide(for: self.view, animated: true)
+                    LoadingHUD.hide(from: self.view)
                     self.navigateToLogin()
                 default:
-                    MBProgressHUD.hide(for: self.view, animated: true)
+                    LoadingHUD.hide(from: self.view)
                 }
             }
             .store(in: &cancellables)

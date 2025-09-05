@@ -7,7 +7,6 @@
 
 import UIKit
 import SnapKit
-import XLPagerTabStrip
 
 final class ProfileViewController: BaseViewController {
     private let profileImage = UIImageView().configure {
@@ -128,12 +127,6 @@ final class ProfileViewController: BaseViewController {
                 self.viewModel.logout()
             }
         )
-    }
-}
-
-extension ProfileViewController: IndicatorInfoProvider {
-    func indicatorInfo(for pagerTabStripController: PagerTabStripViewController) -> IndicatorInfo {
-        return IndicatorInfo(title: "Profile")
     }
 }
 

@@ -5,7 +5,17 @@
 //  Created by Ibrohim Husain on 14/08/25.
 //
 
-import Alamofire
+import Foundation
+
+public enum HTTPMethod: String {
+    case get     = "GET"
+    case post    = "POST"
+    case put     = "PUT"
+    case patch   = "PATCH"
+    case delete  = "DELETE"
+}
+
+public typealias HTTPHeaders = [String: String]
 
 enum Endpoint {
     case listPokemon(limit: Int, offset: Int)
@@ -45,7 +55,7 @@ enum Endpoint {
     public var header: HTTPHeaders? {
         switch self {
         case .listPokemon, .detailPokemon, .speciesPokemon, .typeElement:
-            return HTTPHeaders(["Content-Type": "application/json"])
+            return ["Content-Type": "application/json"]
         }
     }
     

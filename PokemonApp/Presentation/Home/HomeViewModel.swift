@@ -11,6 +11,7 @@ final class HomeViewModel: BaseViewModel {
     private let useCase: PokemonUseCase
     private var offset = 0
     internal var pokemonList = [PokemonDetailModel]()
+    internal let insertRowSubject = PublishSubject<[IndexPath]>()
     
     init(useCase: PokemonUseCase = PokemonUseCaseImpl()) {
         self.useCase = useCase
@@ -23,8 +24,11 @@ final class HomeViewModel: BaseViewModel {
             .observe(on: MainScheduler.instance)
             .subscribe(onSuccess: { [weak self] in
                 guard let self = self else { return }
+                let oldOffset = self.offset
                 self.pokemonList.append(contentsOf: $0)
                 self.offset += offset
+                let indexPaths = (oldOffset..<self.offset).map { IndexPath(row: $0, section: 0) }
+                self.insertRowSubject.onNext(indexPaths)
                 self.loadingState.onNext(.finished)
             }, onFailure: { [weak self] _ in
                 guard let self = self else { return }

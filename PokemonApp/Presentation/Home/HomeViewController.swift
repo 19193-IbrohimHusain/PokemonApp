@@ -50,12 +50,20 @@ final class HomeViewController: BaseViewController {
                 switch $0 {
                 case .loading where viewModel.pokemonList.isEmpty:
                     MBProgressHUD.showAdded(to: self.view, animated: true)
-                case .finished:
-                    MBProgressHUD.hide(for: self.view, animated: true)
-                    self.tableView.reloadData()
                 default:
                     MBProgressHUD.hide(for: self.view, animated: true)
                 }
+            })
+            .disposed(by: disposeBag)
+        
+        viewModel.insertRowSubject
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] indexPaths in
+                guard let self = self else { return }
+                guard !indexPaths.isEmpty else { return }
+                self.tableView.performBatchUpdates({
+                    self.tableView.insertRows(at: indexPaths, with: .automatic)
+                })
             })
             .disposed(by: disposeBag)
     }

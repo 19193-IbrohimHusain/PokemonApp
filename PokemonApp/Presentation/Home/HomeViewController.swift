@@ -47,8 +47,6 @@ final class HomeViewController: BaseViewController {
                 switch $0 {
                 case .loading where viewModel.pokemonList.isEmpty:
                     LoadingHUD.show(in: self.view)
-                case .finished:
-                    LoadingHUD.hide(from: self.view)
                 default:
                     LoadingHUD.hide(from: self.view)
                 }

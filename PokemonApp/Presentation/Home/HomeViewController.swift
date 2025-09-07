@@ -49,10 +49,20 @@ final class HomeViewController: BaseViewController {
                     LoadingHUD.show(in: self.view)
                 case .finished:
                     LoadingHUD.hide(from: self.view)
-                    self.tableView.reloadData()
                 default:
                     LoadingHUD.hide(from: self.view)
                 }
+            }
+            .store(in: &cancellables)
+        
+        viewModel.insertRowSubject
+            .receive(on: RunLoop.main)
+            .sink { [weak self] indexPaths in
+                guard let self = self else { return }
+                guard !indexPaths.isEmpty else { return }
+                self.tableView.performBatchUpdates({
+                    self.tableView.insertRows(at: indexPaths, with: .automatic)
+                })
             }
             .store(in: &cancellables)
     }
@@ -92,7 +102,7 @@ extension HomeViewController: UITableViewDataSource {
 
 extension HomeViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        guard indexPath.row == viewModel.pokemonList.count - 1 else { return }
+        guard indexPath.row == viewModel.pokemonList.count - 2 else { return }
         viewModel.fetchPokemonList()
     }
     

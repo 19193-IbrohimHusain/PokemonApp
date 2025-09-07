@@ -41,6 +41,7 @@ final class PokemonRepository: PokemonDataSource {
         let list: AnyPublisher<PokemonResponse, Error> = manager.fetchDecodable(.listPokemon(limit: limit, offset: offset), timeout: 60)
         
         var cache = fetchListPokemonCache()
+        var seen = Set(cache)
         
         return list
             .map { $0.results.map(\.name) }
@@ -52,9 +53,10 @@ final class PokemonRepository: PokemonDataSource {
             .handleEvents(receiveOutput: { [weak self] in
                 guard let self else { return }
                 do {
-                    cache.append(contentsOf: $0)
-                    let uniqueCache = cache.unique()
-                    try self.listDb.saveList(of: uniqueCache)
+                    let additions = $0.filter { seen.insert($0).inserted }
+                    guard !additions.isEmpty else { return }
+                    cache.append(contentsOf: additions)
+                    try self.listDb.saveList(of: cache)
                 } catch {}
             })
             .catch { [weak self] error -> AnyPublisher<[PokemonDetailModel], Error> in

@@ -6,11 +6,13 @@
 //
 
 import Foundation
+import Combine
 
 final class HomeViewModel: BaseViewModel {
     private let useCase: PokemonUseCase
     private var offset = 0
     internal var pokemonList = [PokemonDetailModel]()
+    internal let insertRowSubject = PassthroughSubject<[IndexPath], Never>()
     
     init(useCase: PokemonUseCase = PokemonUseCaseImpl()) {
         self.useCase = useCase
@@ -31,8 +33,11 @@ final class HomeViewModel: BaseViewModel {
                 }
             } receiveValue: { [weak self] in
                 guard let self else { return }
+                let oldOffset = self.offset
                 self.pokemonList.append(contentsOf: $0)
                 self.offset += offset
+                let indexPaths = (oldOffset..<self.offset).map { IndexPath(row: $0, section: 0) }
+                self.insertRowSubject.send(indexPaths)
             }
             .store(in: &cancellables)
     }

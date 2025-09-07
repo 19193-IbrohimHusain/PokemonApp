@@ -44,6 +44,7 @@ final class PokemonRepository: PokemonDataSource {
         )
         
         var cache = fetchListPokemonCache()
+        var seen = Set(cache)
         
         return list.map { $0.results.map(\.name) }
             .flatMap { [weak self] names -> Single<[PokemonDetailModel]> in
@@ -54,9 +55,10 @@ final class PokemonRepository: PokemonDataSource {
             .do(onSuccess: { [weak self] in
                 guard let self = self else { return }
                 do {
-                    cache.append(contentsOf: $0)
-                    let uniqueCache = cache.unique()
-                    try self.listDb.saveList(of: uniqueCache)
+                    let additions = $0.filter { seen.insert($0).inserted }
+                    guard !additions.isEmpty else { return }
+                    cache.append(contentsOf: additions)
+                    try self.listDb.saveList(of: cache)
                 } catch {}
             })
             .catch { [weak self] in

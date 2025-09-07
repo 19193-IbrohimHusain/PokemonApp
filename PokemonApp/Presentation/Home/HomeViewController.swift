@@ -109,7 +109,7 @@ extension HomeViewController: UITableViewDataSource {
 
 extension HomeViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        guard indexPath.row == viewModel.pokemonList.count - 1 else { return }
+        guard indexPath.row == viewModel.pokemonList.count - 2 else { return }
         viewModel.fetchPokemonList()
     }
     

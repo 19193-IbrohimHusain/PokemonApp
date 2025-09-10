@@ -5,25 +5,33 @@
 //  Created by Ibrohim Husain on 14/08/25.
 //
 
-import UIKit
-import SnapKit
+import AsyncDisplayKit
 
-final class LoginViewController: BaseViewController {
-    private let containerImage = UIView()
-    
-    private let pokeballImage = UIImageView().configure {
+final class LoginViewController: BaseASDKViewController {
+    private let pokeballImage = ASImageNode().configure {
         $0.image = UIImage(named: "Pokeball")
         $0.contentMode = .scaleAspectFit
+        $0.style.preferredSize = CGSizeMake(100, 100)
     }
     
-    private let titleLabel = UILabel().configure {
-        $0.font = .systemFont(ofSize: 24, weight: .semibold)
-        $0.text = "Pokemon App"
+    private let titleNode = ASTextNode().configure {
+        $0.attributedText = NSAttributedString(
+            string: "Pokemon App",
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 24, weight: .semibold),
+                .foregroundColor: UIColor.label
+            ]
+        )
     }
     
-    private let loginLabel = UILabel().configure {
-        $0.font = .systemFont(ofSize: 18, weight: .semibold)
-        $0.text = "Login"
+    private let loginNode = ASTextNode().configure {
+        $0.attributedText = NSAttributedString(
+            string: "Login",
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 18, weight: .semibold),
+                .foregroundColor: UIColor.label
+            ]
+        )
     }
     
     private let emailField = FormTextField().configure {
@@ -39,35 +47,45 @@ final class LoginViewController: BaseViewController {
     private let showPasswordImage = UIImageView(image: UIImage(systemName: "eye.fill"))
     private let rightViewPasswordField = UIView(frame: CGRectMake(0, 0, 40, 40))
     
-    private let signInBtn = UIButton(type: .system).configure {
-        $0.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
-        $0.setTitleColor(.white, for: .normal)
-        $0.setTitle("Sign In", for: .normal)
-        $0.setCornerRadius(radius: 12)
-        $0.setBorder(1, color: .white)
+    private let signInBtn = ASButtonNode().configure {
+        $0.setTitle("Sign In", with: .systemFont(ofSize: 14, weight: .semibold), with: .white, for: .normal)
         $0.backgroundColor = .systemBlue
+        $0.cornerRadius = 12
+        $0.borderWidth = 1
+        $0.borderColor = UIColor.systemBackground.cgColor
+        $0.style.height = ASDimensionMake(40)
     }
     
-    private let infoLabel = UILabel().configure {
-        $0.font = .systemFont(ofSize: 14, weight: .regular)
-        $0.text = "don't have an account?"
+    private let infoNode = ASTextNode().configure {
+        $0.attributedText = NSAttributedString(
+            string: "don't have an account?",
+            attributes: [
+                .font: UIFont.systemFont(ofSize: 14),
+                .foregroundColor: UIColor.label
+            ]
+        )
     }
     
-    private let signUpBtn = UIButton(type: .system).configure {
-        $0.titleLabel?.font = .systemFont(ofSize: 14, weight: .semibold)
-        $0.setTitleColor(.systemBlue, for: .normal)
-        $0.setTitle("Sign Up", for: .normal)
-        $0.backgroundColor = .clear
-        $0.setContentHuggingPriority(.required, for: .horizontal)
+    private let signUpBtn = ASButtonNode().configure {
+        $0.setTitle("Sign Up", with: .systemFont(ofSize: 14, weight: .semibold), with: .systemBlue, for: .normal)
     }
         
     private let viewModel = LoginViewModel()
     
+    
+    override func configNode() {
+        node.backgroundColor = .systemBackground
+        setLayout()
+        bindEvent()
+        emailField.delegate = self
+        passwordField.delegate = self
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupViews()
-        setConstraints()
-        bindEvent()
+        rightViewPasswordField.addSubview(showPasswordImage)
+        showPasswordImage.center = CGPointMake(rightViewPasswordField.width / 2, rightViewPasswordField.height / 2)
+        passwordField.rightView = rightViewPasswordField
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -85,58 +103,43 @@ final class LoginViewController: BaseViewController {
         super.touchesBegan(touches, with: event)
     }
     
-    private func setupViews() {
-        view.backgroundColor = .systemBackground
-        view.addSubviews(containerImage, titleLabel, loginLabel, emailField, passwordField, signInBtn, infoLabel, signUpBtn)
-        containerImage.addSubview(pokeballImage)
-        rightViewPasswordField.addSubview(showPasswordImage)
-        showPasswordImage.center = CGPointMake(rightViewPasswordField.width / 2, rightViewPasswordField.height / 2)
-        passwordField.rightView = rightViewPasswordField
-        emailField.delegate = self
-        passwordField.delegate = self
-    }
-    
-    private func setConstraints() {
-        containerImage.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide)
-            $0.horizontalEdges.equalToSuperview().inset(100)
-            $0.height.equalTo(Screen.width - 100 - 100)
-        }
-        pokeballImage.snp.makeConstraints {
-            $0.center.equalToSuperview()
-            $0.size.equalTo(100)
-        }
-        titleLabel.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.top.equalTo(containerImage.snp.bottom).inset(20)
-        }
-        loginLabel.snp.makeConstraints {
-            $0.leading.equalToSuperview().inset(16)
-            $0.top.equalTo(titleLabel.snp.bottom).inset(-16)
-        }
-        emailField.snp.makeConstraints {
-            $0.top.equalTo(loginLabel.snp.bottom).inset(-10)
-            $0.horizontalEdges.equalToSuperview().inset(16)
-            $0.height.equalTo(50)
-        }
-        passwordField.snp.makeConstraints {
-            $0.top.equalTo(emailField.snp.bottom).inset(-16)
-            $0.horizontalEdges.equalToSuperview().inset(16)
-            $0.height.equalTo(50)
-        }
-        signInBtn.snp.makeConstraints {
-            $0.top.equalTo(passwordField.snp.bottom).inset(-26)
-            $0.horizontalEdges.equalToSuperview().inset(50)
-            $0.height.equalTo(40)
-        }
-        infoLabel.snp.makeConstraints {
-            $0.leading.equalTo(signInBtn).inset(35)
-            $0.top.equalTo(signInBtn.snp.bottom).inset(-10)
-        }
-        signUpBtn.snp.makeConstraints {
-            $0.leading.equalTo(infoLabel.snp.trailing).inset(-4)
-            $0.height.equalTo(17)
-            $0.top.equalTo(signInBtn.snp.bottom).inset(-10)
+    private func setLayout() {
+        node.layoutSpecBlock = { [weak self] node, size in
+            guard let self = self else { return ASLayoutSpec() }
+            let insetImage = ASInsetLayoutSpec(
+                insets: .init(top: node.safeAreaInsets.top + 45, left: 145, bottom: 0, right: 145),
+                child: pokeballImage
+            )
+            let titleCenter = ASCenterLayoutSpec(centeringOptions: .X, sizingOptions: [], child: titleNode)
+            
+            let rowInfo = ASStackLayoutSpec(
+                direction: .horizontal,
+                spacing: 4,
+                justifyContent: .start,
+                alignItems: .center,
+                children: [infoNode, signUpBtn]
+            )
+            
+            let emailNode = ASDisplayNode { self.emailField }
+            emailNode.style.height = ASDimensionMake(50)
+            let passwordNode = ASDisplayNode { self.passwordField }
+            passwordNode.style.height = ASDimensionMake(50)
+            
+            return ASStackLayoutSpec(
+                direction: .vertical,
+                spacing: 0,
+                justifyContent: .start,
+                alignItems: .stretch,
+                children: [
+                    insetImage,
+                    ASInsetLayoutSpec(insets: .init(top: 25, left: 0, bottom: 0, right: 0), child: titleCenter),
+                    ASInsetLayoutSpec(insets: .init(top: 16, left: 16, bottom: 0, right: 0), child: loginNode),
+                    ASInsetLayoutSpec(insets: .init(top: 10, left: 16, bottom: 0, right: 16), child: emailNode),
+                    ASInsetLayoutSpec(insets: .init(top: 16, left: 16, bottom: 0, right: 16), child: passwordNode),
+                    ASInsetLayoutSpec(insets: .init(top: 26, left: 50, bottom: 0, right: 50), child: signInBtn),
+                    ASInsetLayoutSpec(insets: .init(top: 10, left: 85, bottom: 0, right: 16), child: rowInfo)
+                ]
+            )
         }
     }
     
@@ -175,12 +178,12 @@ final class LoginViewController: BaseViewController {
                 guard let self = self else { return }
                 switch $0 {
                 case .loading:
-                    LoadingHUD.show(in: self.view)
+                    LoadingHUDNode.show(in: self.node)
                 case .finished:
-                    LoadingHUD.show(in: self.view)
+                    LoadingHUDNode.show(in: self.node)
                     self.navigateToTabView()
                 default:
-                    LoadingHUD.hide(from: self.view)
+                    LoadingHUDNode.hide()
                 }
             }
             .store(in: &cancellables)

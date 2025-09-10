@@ -5,13 +5,12 @@
 //  Created by Ibrohim Husain on 14/08/25.
 //
 
-import UIKit
-import SnapKit
+import AsyncDisplayKit
 
-final class ParentTabViewController: UIViewController {
-    private let headerBarView = UnderlineHeaderBar()
-    private let collectionView = UICollectionView(
-        frame: .zero,
+final class ParentTabViewController: BaseASDKViewController {
+    private let headerBarView = UnderlineHeaderBarNode(titles: ["Home", "Profile"])
+    
+    private let collectionNode = ASCollectionNode(
         collectionViewLayout: UICollectionViewFlowLayout()
     ).configure {
         let layout = $0.collectionViewLayout as? UICollectionViewFlowLayout
@@ -22,24 +21,25 @@ final class ParentTabViewController: UIViewController {
         $0.backgroundColor = .systemBackground
         $0.isPagingEnabled = true
         $0.showsHorizontalScrollIndicator = false
+        $0.style.flexGrow = 1
     }
     
-    private let pages: [UIViewController] = [
+    private let pages: [ASDKViewController<ASDisplayNode>] = [
         HomeViewController(),
         ProfileViewController()
     ]
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
+    override func configNode() {
         setupNavigationBar()
-        setupView()
-        setConstraint()
+        setupNode()
     }
     
     override func viewWillTransition(to size: CGSize, with coordinator: any UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
-        collectionView.reloadData()
-        headerBarView.updateLayout()
+        coordinator.animate(alongsideTransition: { _ in
+            self.collectionNode.relayoutItems()
+            self.headerBarView.updateLayout()
+        })
     }
     
     private func setupNavigationBar() {
@@ -52,25 +52,27 @@ final class ParentTabViewController: UIViewController {
         )
     }
     
-    private func setupView() {
-        view.backgroundColor = .systemBackground
-        view.addSubviews(headerBarView, collectionView)
+    private func setupNode() {
+        node.backgroundColor = .systemBackground
         headerBarView.delegate = self
-        headerBarView.setTitles(["Home", "Profile"])
-        collectionView.delegate = self
-        collectionView.dataSource = self
-        collectionView.registerCell(TabContainerCell.self)
+        collectionNode.delegate = self
+        collectionNode.dataSource = self
+        node.layoutSpecBlock = { [weak self] node, size in
+            guard let self = self else { return ASLayoutSpec() }
+            return self.setLayout()
+        }
     }
     
-    private func setConstraint() {
-        headerBarView.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide)
-            $0.horizontalEdges.equalToSuperview()
-        }
-        collectionView.snp.makeConstraints {
-            $0.top.equalTo(headerBarView.snp.bottom)
-            $0.horizontalEdges.bottom.equalToSuperview()
-        }
+    private func setLayout() -> ASLayoutSpec {
+        let stack = ASStackLayoutSpec(
+            direction: .vertical,
+            spacing: 0,
+            justifyContent: .start,
+            alignItems: .stretch,
+            children: [headerBarView, collectionNode]
+        )
+        
+        return ASInsetLayoutSpec(insets: .init(top: node.safeAreaInsets.top, left: 0, bottom: 0, right: 0), child: stack)
     }
     
     @objc
@@ -80,26 +82,25 @@ final class ParentTabViewController: UIViewController {
     }
 }
 
-extension ParentTabViewController: UnderlineHeaderBarDelegate {
-    func tabBar(_ tabBar: UnderlineHeaderBar, didSelectItemAt index: Int) {
+extension ParentTabViewController: UnderlineHeaderBarNodeDelegate {
+    func tabBar(_ tabBar: UnderlineHeaderBarNode, didSelectItemAt index: Int) {
         guard index >= 0, index < pages.count else { return }
-        collectionView.scrollToItem(at: IndexPath(item: index, section: 0), at: .centeredHorizontally, animated: true)
+        collectionNode.scrollToItem(at: IndexPath(item: index, section: 0), at: .centeredHorizontally, animated: true)
     }
 }
 
-extension ParentTabViewController: UICollectionViewDataSource {
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+extension ParentTabViewController: ASCollectionDataSource {
+    func collectionNode(_ collectionNode: ASCollectionNode, numberOfItemsInSection section: Int) -> Int {
         return pages.count
     }
     
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell: TabContainerCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
-        cell.host(pages[indexPath.item], in: self)
-        return cell
+    func collectionNode(_ collectionNode: ASCollectionNode, nodeBlockForItemAt indexPath: IndexPath) -> ASCellNodeBlock {
+        let page = pages[indexPath.item]
+        return { TabContainerCellNode(host: page, parent: self) }
     }
 }
 
-extension ParentTabViewController: UICollectionViewDelegateFlowLayout {
+extension ParentTabViewController: ASCollectionDelegateFlowLayout {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         headerBarView.setIndicatorPosition(with: scrollView.contentOffset.x)
     }
@@ -109,25 +110,33 @@ extension ParentTabViewController: UICollectionViewDelegateFlowLayout {
         headerBarView.selectTab(at: index)
     }
     
-    func collectionView(
-        _ collectionView: UICollectionView,
-        layout collectionViewLayout: UICollectionViewLayout,
-        sizeForItemAt indexPath: IndexPath
-    ) -> CGSize {
-        return collectionView.bounds.size
+    func collectionNode(
+        _ collectionNode: ASCollectionNode,
+        constrainedSizeForItemAt indexPath: IndexPath
+    ) -> ASSizeRange {
+        return ASSizeRangeMake(collectionNode.bounds.size)
     }
 }
 
-final class TabContainerCell: UICollectionViewCell {
-    func host(_ vc: UIViewController, in parent: UIViewController) {
-        if vc.parent != parent {
-            parent.addChild(vc)
-            contentView.addSubview(vc.view)
-            vc.view.snp.makeConstraints { $0.edges.equalToSuperview() }
-            vc.didMove(toParent: parent)
-        } else if vc.view.superview != contentView {
-            contentView.addSubview(vc.view)
-            vc.view.snp.remakeConstraints { $0.edges.equalToSuperview() }
-        }
+final class TabContainerCellNode: BaseCellNode {
+    private weak var parent: ASDKViewController<ASDisplayNode>?
+    private weak var hostedVC: ASDKViewController<ASDisplayNode>?
+    
+    init(host: ASDKViewController<ASDisplayNode>, parent: ASDKViewController<ASDisplayNode>) {
+        self.hostedVC = host
+        self.parent = parent
+        super.init()
+    }
+    
+    override func layoutSpecThatFits(_ constrainedSize: ASSizeRange) -> ASLayoutSpec {
+        guard let hostedVC = hostedVC else { return ASLayoutSpec() }
+        return ASInsetLayoutSpec(insets: .zero, child: hostedVC.node)
+    }
+    
+    override func didLoad() {
+        super.didLoad()
+        guard let parent, let hostedVC, hostedVC.parent != parent else { return }
+        parent.addChild(hostedVC)
+        hostedVC.didMove(toParent: parent)
     }
 }

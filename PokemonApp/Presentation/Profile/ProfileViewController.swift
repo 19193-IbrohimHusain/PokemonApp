@@ -5,65 +5,74 @@
 //  Created by Ibrohim Husain on 14/08/25.
 //
 
-import UIKit
-import SnapKit
+import AsyncDisplayKit
 
-final class ProfileViewController: BaseViewController {
-    private let profileImage = UIImageView().configure {
+final class ProfileViewController: BaseASDKViewController {
+    private let profileImage = ASImageNode().configure {
         $0.contentMode = .scaleAspectFill
         $0.image = UIImage(named: "BlankUser")
-        $0.setCornerRadius(radius: 40)
+        $0.cornerRadius = 40
+        $0.style.preferredSize = CGSizeMake(80, 80)
     }
     
-    private let usernameLabel = UILabel().configure {
-        $0.font = .systemFont(ofSize: 16, weight: .regular)
-    }
+    private let usernameNode = ASTextNode()
+    private let emailNode = ASTextNode()
     
-    private let emailLabel = UILabel().configure {
-        $0.font = .systemFont(ofSize: 14, weight: .regular)
-    }
-    
-    private let tableView = UITableView(frame: .zero, style: .insetGrouped).configure {
-        $0.showsVerticalScrollIndicator = false
-    }
+    private let tableNode = ASTableNode(style: .insetGrouped)
     
     private let viewModel = ProfileViewModel()
     
+    override func configNode() {
+        setupNode()
+        bindEvent()
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupView()
-        setConstraint()
-        bindEvent()
+        tableNode.view.showsVerticalScrollIndicator = false
         viewModel.fetchCurrentUser()
     }
     
-    private func setupView() {
-        view.backgroundColor = .systemGroupedBackground
-        view.addSubviews(profileImage, usernameLabel, emailLabel, tableView)
-        tableView.dataSource = self
-        tableView.delegate = self
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: viewModel.defaultCellIdentifier)
-    }
-    
-    private func setConstraint() {
-        profileImage.snp.makeConstraints {
-            $0.top.equalToSuperview().inset(16)
-            $0.leading.equalToSuperview().inset(16)
-            $0.size.equalTo(80)
-        }
-        usernameLabel.snp.makeConstraints {
-            $0.leading.equalTo(profileImage.snp.trailing).inset(-10)
-            $0.trailing.equalToSuperview().inset(16)
-            $0.bottom.equalTo(profileImage.snp.centerY)
-        }
-        emailLabel.snp.makeConstraints {
-            $0.leading.equalTo(usernameLabel)
-            $0.top.equalTo(usernameLabel.snp.bottom).inset(-4)
-        }
-        tableView.snp.makeConstraints {
-            $0.horizontalEdges.equalToSuperview()
-            $0.top.equalTo(profileImage.snp.bottom).inset(-8)
-            $0.bottom.equalToSuperview()
+    private func setupNode() {
+        node.backgroundColor = .systemGroupedBackground
+        tableNode.style.flexGrow = 1
+        tableNode.dataSource = self
+        tableNode.delegate = self
+        node.layoutSpecBlock = { [weak self] _,_ in
+            guard let self = self else { return ASLayoutSpec() }
+            let nameAndEmailStack = ASStackLayoutSpec(
+                direction: .vertical,
+                spacing: 4,
+                justifyContent: .spaceBetween,
+                alignItems: .stretch,
+                children: [usernameNode, emailNode]
+            )
+            
+            let pictureNameAndEmailStack = ASStackLayoutSpec(
+                direction: .horizontal,
+                spacing: 10,
+                justifyContent: .start,
+                alignItems: .center,
+                children: [profileImage, nameAndEmailStack]
+            )
+            
+            let insetProfileInfo = ASInsetLayoutSpec(
+                insets: .init(top: 16, left: 8, bottom: 0, right: 8),
+                child: pictureNameAndEmailStack
+            )
+            
+            let profileInfoAndTableStack = ASStackLayoutSpec(
+                direction: .vertical,
+                spacing: 8,
+                justifyContent: .start,
+                alignItems: .stretch,
+                children: [insetProfileInfo, tableNode]
+            )
+            
+            return ASInsetLayoutSpec(
+                insets: .init(top: 0, left: 8, bottom: 0, right: 8),
+                child: profileInfoAndTableStack
+            )
         }
     }
     
@@ -72,8 +81,20 @@ final class ProfileViewController: BaseViewController {
             .receive(on: RunLoop.main)
             .sink { [weak self] in
                 guard let self = self else { return }
-                self.usernameLabel.text = $0.name
-                self.emailLabel.text = $0.email
+                self.usernameNode.attributedText = NSAttributedString(
+                    string: $0.name,
+                    attributes: [
+                        .font: UIFont.systemFont(ofSize: 16, weight: .regular),
+                        .foregroundColor: UIColor.label
+                    ]
+                )
+                self.emailNode.attributedText = NSAttributedString(
+                    string: $0.email,
+                    attributes: [
+                        .font: UIFont.systemFont(ofSize: 14, weight: .regular),
+                        .foregroundColor: UIColor.secondaryLabel
+                    ]
+                )
             }
             .store(in: &cancellables)
         
@@ -83,12 +104,12 @@ final class ProfileViewController: BaseViewController {
                 guard let self = self else { return }
                 switch $0 {
                 case .loading:
-                    LoadingHUD.show(in: self.view)
+                    LoadingHUDNode.show()
                 case .finished:
-                    LoadingHUD.hide(from: self.view)
+                    LoadingHUDNode.hide()
                     self.navigateToLogin()
                 default:
-                    LoadingHUD.hide(from: self.view)
+                    LoadingHUDNode.hide()
                 }
             }
             .store(in: &cancellables)
@@ -130,20 +151,14 @@ final class ProfileViewController: BaseViewController {
     }
 }
 
-extension ProfileViewController: UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+extension ProfileViewController: ASTableDataSource {
+    func tableNode(_ tableNode: ASTableNode, numberOfRowsInSection section: Int) -> Int {
         return viewModel.menuData.count
     }
     
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: viewModel.defaultCellIdentifier, for: indexPath)
+    func tableNode(_ tableNode: ASTableNode, nodeBlockForRowAt indexPath: IndexPath) -> ASCellNodeBlock {
         let data = viewModel.menuData[safe: indexPath.row]
-        cell.selectionStyle = .none
-        cell.textLabel?.text = data?.title
-        cell.imageView?.image = data?.icon
-        cell.imageView?.tintColor = data?.tint
-        cell.accessoryType = .disclosureIndicator
-        return cell
+        return { MenuCellNode(title: data?.title, icon: data?.icon, tint: data?.tint) }
     }
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
@@ -151,11 +166,7 @@ extension ProfileViewController: UITableViewDataSource {
     }
 }
 
-extension ProfileViewController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return UITableView.automaticDimension
-    }
-    
+extension ProfileViewController: ASTableDelegate {
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return 30
     }

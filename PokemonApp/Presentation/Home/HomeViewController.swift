@@ -39,6 +39,8 @@ final class HomeViewController: BaseASDKViewController {
     }
     
     private func bindEvent() {
+        viewModel.observeCachePokemonList()
+        
         viewModel.loadingState
             .receive(on: RunLoop.main)
             .sink { [weak self] in

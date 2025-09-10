@@ -9,6 +9,7 @@ import Combine
 
 protocol PokemonDataSource {
     func fetchListPokemon(limit: Int, offset: Int) -> AnyPublisher<[PokemonDetailModel], Error>
+    func savePokemonList(_ pokemon: [PokemonDetailModel]) -> AnyPublisher<Bool, Error>
     func fetchListPokemonCache() -> [PokemonDetailModel]
     func fetchDetailPokemon(of name: String) -> AnyPublisher<PokemonDetailModel, Error>
     func fetchPokemonSpecies(of name: String) -> AnyPublisher<PokemonSpecies, Error>
@@ -40,9 +41,6 @@ final class PokemonRepository: PokemonDataSource {
     func fetchListPokemon(limit: Int, offset: Int) -> AnyPublisher<[PokemonDetailModel], Error> {
         let list: AnyPublisher<PokemonResponse, Error> = manager.fetchDecodable(.listPokemon(limit: limit, offset: offset), timeout: 60)
         
-        var cache = fetchListPokemonCache()
-        var seen = Set(cache)
-        
         return list
             .map { $0.results.map(\.name) }
             .flatMap { [weak self] names -> AnyPublisher<[PokemonDetailModel], Error> in
@@ -50,23 +48,20 @@ final class PokemonRepository: PokemonDataSource {
                 let detailPublishers = names.map { self.fetchDetailPokemon(of: $0) }
                 return Publishers.ZipMany(detailPublishers).eraseToAnyPublisher()
             }
-            .handleEvents(receiveOutput: { [weak self] in
-                guard let self else { return }
-                do {
-                    let additions = $0.filter { seen.insert($0).inserted }
-                    guard !additions.isEmpty else { return }
-                    cache.append(contentsOf: additions)
-                    try self.listDb.saveList(of: cache)
-                } catch {}
-            })
-            .catch { [weak self] error -> AnyPublisher<[PokemonDetailModel], Error> in
-                guard let self else { return Fail(error: error).eraseToAnyPublisher() }
-                let slice = self.sliceListPokemonCache(for: limit, offset: offset, cache: cache)
-                return slice.isEmpty
-                ? Fail(error: error).eraseToAnyPublisher()
-                : Just(slice).setFailureType(to: Error.self).eraseToAnyPublisher()
-            }
             .eraseToAnyPublisher()
+    }
+    
+    func savePokemonList(_ pokemon: [PokemonDetailModel]) -> AnyPublisher<Bool, Error> {
+        Publishers.Single<Bool, Error> { [weak self] promise in
+            guard let self = self else { return }
+            do {
+                try listDb.saveList(of: pokemon)
+                promise(.success(true))
+            } catch {
+                promise(.failure(error))
+            }
+        }
+        .eraseToAnyPublisher()
     }
     
     func fetchListPokemonCache() -> [PokemonDetailModel] {

@@ -5,51 +5,49 @@
 //  Created by Ibrohim Husain on 14/08/25.
 //
 
-import UIKit
-import SnapKit
+import AsyncDisplayKit
 import Combine
 
-final class SearchViewController: BaseViewController {
+final class SearchViewController: BaseASDKViewController {
     private let searchBar = UISearchBar().configure {
         $0.placeholder = "Pokemon Name"
     }
     
-    private let tableView = UITableView().configure {
-        $0.separatorStyle = .none
+    private let tableNode = ASTableNode().configure {
         $0.backgroundColor = .systemGroupedBackground
-        $0.showsVerticalScrollIndicator = false
+        $0.contentInset = .init(top: 8, left: 0, bottom: 8, right: 0)
+        $0.view.separatorStyle = .none
+        $0.view.showsVerticalScrollIndicator = false
+        $0.style.flexGrow = 1
     }
     
     private let viewModel = SearchViewModel()
     
+    override func configNode() {
+        navigationItem.title = "Search Pokemon"
+        node.backgroundColor = .systemBackground
+        tableNode.dataSource = self
+        tableNode.delegate = self
+        node.layoutSpecBlock = { [weak self] node,_ in
+            guard let self = self else { return ASLayoutSpec() }
+            let searchNode = ASDisplayNode { self.searchBar }
+            searchNode.style.height = ASDimensionMake(44)
+            let insetSearch = ASInsetLayoutSpec(insets: .init(top: 0, left: 16, bottom: 0, right: 16), child: searchNode)
+            let stack = ASStackLayoutSpec(
+                direction: .vertical,
+                spacing: 0,
+                justifyContent: .start,
+                alignItems: .stretch,
+                children: [insetSearch, self.tableNode]
+            )
+            return ASInsetLayoutSpec(insets: .init(top: node.safeAreaInsets.top, left: 0, bottom: 0, right: 0), child: stack)
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupView()
-        setConstraint()
         bindEvent()
         viewModel.fetchPokemonListFromCache()
-    }
-    
-    private func setupView() {
-        navigationItem.title = "Search Pokemon"
-        view.backgroundColor = .systemBackground
-        view.addSubviews(tableView, searchBar)
-        
-        tableView.dataSource = self
-        tableView.delegate = self
-        tableView.registerCell(PokemonCardTableViewCell.self)
-    }
-    
-    private func setConstraint() {
-        searchBar.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide)
-            $0.height.equalTo(44)
-            $0.horizontalEdges.equalToSuperview().inset(16)
-        }
-        tableView.snp.makeConstraints {
-            $0.top.equalTo(searchBar.snp.bottom)
-            $0.horizontalEdges.bottom.equalToSuperview()
-        }
     }
     
     private func bindEvent() {
@@ -61,7 +59,7 @@ final class SearchViewController: BaseViewController {
                 guard let self = self else { return }
                 switch $0 {
                 case .finished:
-                    self.tableView.reloadData()
+                    self.tableNode.reloadData()
                 default:
                     break
                 }
@@ -85,31 +83,33 @@ final class SearchViewController: BaseViewController {
     }
 }
 
-extension SearchViewController: UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+extension SearchViewController: ASTableDataSource {
+    func tableNode(_ tableNode: ASTableNode, numberOfRowsInSection section: Int) -> Int {
         return viewModel.searchResult.count
     }
     
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell: PokemonCardTableViewCell = tableView.dequeueReusableCell(forIndexPath: indexPath)
-        guard let data = viewModel.searchResult[safe: indexPath.row] else { return cell }
-        cell.setContent(with: data, isFavorite: viewModel.isPokemonFavorite(data))
-        cell.toggleFavorite = { [weak self] save in
-            guard let self = self else { return }
-            if save {
-                self.viewModel.saveFavoritePokemon(data)
-            } else {
-                self.viewModel.deleteFavoritePokemon(data)
+    func tableNode(_ tableNode: ASTableNode, nodeBlockForRowAt indexPath: IndexPath) -> ASCellNodeBlock {
+        guard let data = viewModel.searchResult[safe: indexPath.row] else { return { .init() } }
+        let isFav = viewModel.isPokemonFavorite(data)
+        return {
+            let cell = PokemonCardCellNode(data: data, isFavorite: isFav)
+            cell.toggleFavorite = { [weak self] save in
+                guard let self = self else { return }
+                if save {
+                    self.viewModel.saveFavoritePokemon(data)
+                } else {
+                    self.viewModel.deleteFavoritePokemon(data)
+                }
+                tableNode.reloadRows(at: [indexPath], with: .automatic)
             }
-            tableView.reloadRows(at: [indexPath], with: .automatic)
+            return cell
         }
-        return cell
     }
 }
 
-extension SearchViewController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return UITableView.automaticDimension
+extension SearchViewController: ASTableDelegate {
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        searchBar.resignFirstResponder()
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

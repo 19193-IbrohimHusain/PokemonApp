@@ -13,12 +13,10 @@ Experiment App. Built with Swift & UIKit
 ## Tech Stack
 
 - Swift 5
-- UIKit
+- Texture
 - MVVM + Clean Architecture
-- SnapKit - a DSL to make Auto Layout easy
 - Combine – reactive programming for async handling
 - URLSession – networking layer
-- Kingfisher – fast image downloading & caching
 - Couchbase Lite – local persistence & offline-first support
 
 ## Features

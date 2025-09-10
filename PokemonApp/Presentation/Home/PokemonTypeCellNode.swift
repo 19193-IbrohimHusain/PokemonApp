@@ -24,11 +24,15 @@ final class PokemonTypeCellNode: BaseCellNode {
         )
         backgroundColor = background
         cornerRadius = 12
-        layer.masksToBounds = false
         shadowColor = UIColor.black.cgColor
         shadowOffset = CGSize(width: 0, height: 2)
         shadowRadius = 2
         shadowOpacity = 0.3
+    }
+    
+    override func didLoad() {
+        super.didLoad()
+        layer.masksToBounds = false
     }
     
     override func layoutSpecThatFits(_ constrainedSize: ASSizeRange) -> ASLayoutSpec {

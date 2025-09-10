@@ -88,11 +88,13 @@ extension UnderlineHeaderBarNode: ASCollectionDataSource {
         titles.count
     }
     
-    func collectionNode(_ collectionNode: ASCollectionNode, nodeForItemAt indexPath: IndexPath) -> ASCellNode {
+    func collectionNode(_ collectionNode: ASCollectionNode, nodeBlockForItemAt indexPath: IndexPath) -> ASCellNodeBlock {
         let title = titles[indexPath.item]
-        let cell = UnderlineTabCellNode()
-        cell.configure(title: title)
-        return cell
+        return {
+            let cell = UnderlineTabCellNode()
+            cell.configure(title: title)
+            return cell
+        }
     }
 }
 

@@ -148,13 +148,15 @@ extension PokemonCardCellNode: ASCollectionDataSource {
         types.count
     }
     
-    func collectionNode(_ collectionNode: ASCollectionNode, nodeForItemAt indexPath: IndexPath) -> ASCellNode {
+    func collectionNode(_ collectionNode: ASCollectionNode, nodeBlockForItemAt indexPath: IndexPath) -> ASCellNodeBlock {
         let elementType = types[safe: indexPath.item]?.type.name
-        return PokemonTypeCellNode(
-            title: elementType?.capitalized,
-            background: ElementColor.color(for: elementType.orEmpty),
-            textColor: ElementColor.color(for: elementType.orEmpty).contrastingTextColor
-        )
+        return {
+            PokemonTypeCellNode(
+                title: elementType?.capitalized,
+                background: ElementColor.color(for: elementType.orEmpty),
+                textColor: ElementColor.color(for: elementType.orEmpty).contrastingTextColor
+            )
+        }
     }
 }
 

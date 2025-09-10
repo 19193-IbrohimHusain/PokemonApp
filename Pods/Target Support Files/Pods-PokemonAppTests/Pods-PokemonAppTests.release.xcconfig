@@ -1,9 +1,9 @@
 CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO
-FRAMEWORK_SEARCH_PATHS = $(inherited) "${PODS_CONFIGURATION_BUILD_DIR}/Kingfisher" "${PODS_CONFIGURATION_BUILD_DIR}/SnapKit" "${PODS_ROOT}/CouchbaseLite-Swift" "${PODS_XCFRAMEWORKS_BUILD_DIR}/CouchbaseLite-Swift"
-GCC_PREPROCESSOR_DEFINITIONS = $(inherited) COCOAPODS=1
-HEADER_SEARCH_PATHS = $(inherited) "${PODS_CONFIGURATION_BUILD_DIR}/Kingfisher/Kingfisher.framework/Headers" "${PODS_CONFIGURATION_BUILD_DIR}/SnapKit/SnapKit.framework/Headers"
+FRAMEWORK_SEARCH_PATHS = $(inherited) "${PODS_CONFIGURATION_BUILD_DIR}/Kingfisher" "${PODS_CONFIGURATION_BUILD_DIR}/PINCache" "${PODS_CONFIGURATION_BUILD_DIR}/PINOperation" "${PODS_CONFIGURATION_BUILD_DIR}/PINRemoteImage" "${PODS_CONFIGURATION_BUILD_DIR}/SnapKit" "${PODS_CONFIGURATION_BUILD_DIR}/Texture" "${PODS_ROOT}/CouchbaseLite-Swift" "${PODS_XCFRAMEWORKS_BUILD_DIR}/CouchbaseLite-Swift"
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) COCOAPODS=1 $(inherited) PIN_WEBP=1 $(inherited) AS_USE_ASSETS_LIBRARY=1 $(inherited) AS_USE_MAPKIT=1 $(inherited) AS_USE_PHOTOS=1 $(inherited) AS_USE_VIDEO=1
+HEADER_SEARCH_PATHS = $(inherited) "${PODS_CONFIGURATION_BUILD_DIR}/Kingfisher/Kingfisher.framework/Headers" "${PODS_CONFIGURATION_BUILD_DIR}/PINCache/PINCache.framework/Headers" "${PODS_CONFIGURATION_BUILD_DIR}/PINOperation/PINOperation.framework/Headers" "${PODS_CONFIGURATION_BUILD_DIR}/PINRemoteImage/PINRemoteImage.framework/Headers" "${PODS_CONFIGURATION_BUILD_DIR}/SnapKit/SnapKit.framework/Headers" "${PODS_CONFIGURATION_BUILD_DIR}/Texture/AsyncDisplayKit.framework/Headers"
 LIBRARY_SEARCH_PATHS = $(inherited) $(SDKROOT)/usr/lib/swift
-OTHER_LDFLAGS = $(inherited) -l"swiftCoreGraphics" -framework "Accelerate" -framework "CFNetwork" -framework "CouchbaseLiteSwift" -framework "Kingfisher" -framework "SnapKit" -weak_framework "Combine" -weak_framework "SwiftUI"
+OTHER_LDFLAGS = $(inherited) -l"c++" -l"swiftCoreGraphics" -framework "AVFoundation" -framework "Accelerate" -framework "AssetsLibrary" -framework "AsyncDisplayKit" -framework "CFNetwork" -framework "CoreLocation" -framework "CoreMedia" -framework "CouchbaseLiteSwift" -framework "Foundation" -framework "ImageIO" -framework "Kingfisher" -framework "MapKit" -framework "PINCache" -framework "PINOperation" -framework "PINRemoteImage" -framework "Photos" -framework "SnapKit" -framework "UIKit" -weak_framework "Combine" -weak_framework "SwiftUI" -weak_framework "UIKit"
 PODS_BUILD_DIR = ${BUILD_DIR}
 PODS_CONFIGURATION_BUILD_DIR = ${PODS_BUILD_DIR}/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)
 PODS_PODFILE_DIR_PATH = ${SRCROOT}/.

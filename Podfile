@@ -7,6 +7,7 @@ target 'PokemonApp' do
 
   # Pods for PokemonApp
   pod 'SnapKit'
+  pod 'Texture'
   pod 'Kingfisher'
   pod 'CouchbaseLite-Swift'
 

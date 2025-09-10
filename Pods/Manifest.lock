@@ -1,6 +1,5 @@
 PODS:
   - CouchbaseLite-Swift (3.2.4)
-  - Kingfisher (8.3.2)
   - PINCache (3.0.4):
     - PINCache/Arc-exception-safe (= 3.0.4)
     - PINCache/Core (= 3.0.4)
@@ -16,7 +15,6 @@ PODS:
   - PINRemoteImage/PINCache (3.0.4):
     - PINCache (~> 3.0.4)
     - PINRemoteImage/Core
-  - SnapKit (5.7.1)
   - Texture (3.2.0):
     - Texture/AssetsLibrary (= 3.2.0)
     - Texture/Core (= 3.2.0)
@@ -40,29 +38,23 @@ PODS:
 
 DEPENDENCIES:
   - CouchbaseLite-Swift
-  - Kingfisher
-  - SnapKit
   - Texture
 
 SPEC REPOS:
   trunk:
     - CouchbaseLite-Swift
-    - Kingfisher
     - PINCache
     - PINOperation
     - PINRemoteImage
-    - SnapKit
     - Texture
 
 SPEC CHECKSUMS:
   CouchbaseLite-Swift: 1d52b46b01918a84f43240ef23c90bae6d3dd837
-  Kingfisher: 0621d0ac0c78fecb19f6dc5303bde2b52abaf2f5
   PINCache: d9a87a0ff397acffe9e2f0db972ac14680441158
   PINOperation: fb563bcc9c32c26d6c78aaff967d405aa2ee74a7
   PINRemoteImage: 6256a644f4996991f124811763c7286b2a63ff94
-  SnapKit: d612e99e678a2d3b95bf60b0705ed0a35c03484a
   Texture: 61e86ea2ee124f545be40293b54b5b8986006da2
 
-PODFILE CHECKSUM: 28b6a58f78067c8e3b8d7c4e6e1ad6aa01d71c6e
+PODFILE CHECKSUM: b91d74417a6c4c238afe77b47533186b111ab42b
 
 COCOAPODS: 1.16.2

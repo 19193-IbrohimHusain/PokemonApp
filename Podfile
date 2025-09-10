@@ -6,9 +6,7 @@ target 'PokemonApp' do
   use_frameworks!
 
   # Pods for PokemonApp
-  pod 'SnapKit'
   pod 'Texture'
-  pod 'Kingfisher'
   pod 'CouchbaseLite-Swift'
 
   target 'PokemonAppTests' do

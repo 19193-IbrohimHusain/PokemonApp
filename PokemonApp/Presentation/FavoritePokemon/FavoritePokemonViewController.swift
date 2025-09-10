@@ -5,33 +5,32 @@
 //  Created by Ibrohim Husain on 16/08/25.
 //
 
-import UIKit
-import SnapKit
+import AsyncDisplayKit
 
-final class FavoritePokemonViewController: BaseViewController {
-    private let tableView = UITableView().configure {
-        $0.separatorStyle = .none
-        $0.showsVerticalScrollIndicator = false
+final class FavoritePokemonViewController: BaseASDKViewController {
+    private let tableNode = ASTableNode().configure {
         $0.backgroundColor = .systemGroupedBackground
         $0.contentInset = .init(top: 8, left: 0, bottom: 8, right: 0)
+        $0.view.separatorStyle = .none
+        $0.view.showsVerticalScrollIndicator = false
     }
     
     private let viewModel = FavoritePokemonViewModel()
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        setupView()
-        bindEvent()
-        viewModel.fetchPokemonList()
+    override func configNode() {
+        navigationItem.title = "Favorite Pokemon"
+        tableNode.dataSource = self
+        tableNode.delegate = self
+        node.layoutSpecBlock = { [weak self] _,_ in
+            guard let self = self else { return ASLayoutSpec() }
+            return ASInsetLayoutSpec(insets: .zero, child: tableNode)
+        }
     }
     
-    private func setupView() {
-        navigationItem.title = "Favorite Pokemon"
-        view.addSubview(tableView)
-        tableView.snp.makeConstraints { $0.edges.equalToSuperview() }
-        tableView.dataSource = self
-        tableView.delegate = self
-        tableView.registerCell(PokemonCardTableViewCell.self)
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        bindEvent()
+        viewModel.fetchPokemonList()
     }
     
     private func bindEvent() {
@@ -41,10 +40,10 @@ final class FavoritePokemonViewController: BaseViewController {
                 guard let self = self else { return }
                 switch $0 {
                 case .loading:
-                    LoadingHUD.show(in: self.view)
+                    LoadingHUDNode.show(in: self.node)
                 default:
-                    LoadingHUD.hide(from: self.view)
-                    self.tableView.reloadData()
+                    LoadingHUDNode.hide()
+                    self.tableNode.reloadData()
                 }
             }
             .store(in: &cancellables)
@@ -57,29 +56,26 @@ final class FavoritePokemonViewController: BaseViewController {
     }
 }
 
-extension FavoritePokemonViewController: UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+extension FavoritePokemonViewController: ASTableDataSource {
+    func tableNode(_ tableNode: ASTableNode, numberOfRowsInSection section: Int) -> Int {
         return viewModel.pokemonList.count
     }
     
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell: PokemonCardTableViewCell = tableView.dequeueReusableCell(forIndexPath: indexPath)
-        guard let data = viewModel.pokemonList[safe: indexPath.row] else { return cell }
-        cell.setContent(with: data, isFavorite: true)
-        cell.toggleFavorite = { [weak self] save in
-            guard let self = self else { return }
-            self.viewModel.deleteFavoritePokemon(at: indexPath.row)
-            tableView.reloadData()
+    func tableNode(_ tableNode: ASTableNode, nodeBlockForRowAt indexPath: IndexPath) -> ASCellNodeBlock {
+        guard let data = viewModel.pokemonList[safe: indexPath.row] else { return { .init() } }
+        return {
+            let cell = PokemonCardCellNode(data: data, isFavorite: true)
+            cell.toggleFavorite = { [weak self] save in
+                guard let self = self else { return }
+                self.viewModel.deleteFavoritePokemon(at: indexPath.row)
+                tableNode.deleteRows(at: [indexPath], with: .automatic)
+            }
+            return cell
         }
-        return cell
     }
 }
 
-extension FavoritePokemonViewController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return UITableView.automaticDimension
-    }
-    
+extension FavoritePokemonViewController: ASTableDelegate {
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let swipeAction = UISwipeActionsConfiguration(actions: [UIContextualAction(style: .destructive, title: "Delete") { [weak self] _,_,_ in
             guard let self = self else { return }

@@ -9,7 +9,8 @@ import Foundation
 
 public extension Collection where Indices.Iterator.Element == Index {
     subscript (safe index: Index) -> Iterator.Element? {
-        return indices.contains(index) ? self[index] : nil
+        guard index >= startIndex, index < endIndex else { return nil }
+        return self[index]
     }
 }
 

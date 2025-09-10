@@ -41,6 +41,7 @@ final class UnderlineHeaderBarNode: BaseDisplayNode {
         backgroundColor = .systemBackground
         collectionNode.dataSource = self
         collectionNode.delegate = self
+        selectTab(at: 0)
     }
     
     override func layoutSpecThatFits(_ constrainedSize: ASSizeRange) -> ASLayoutSpec {
@@ -59,11 +60,13 @@ final class UnderlineHeaderBarNode: BaseDisplayNode {
     
     internal func selectTab(at index: Int) {
         guard index >= 0 && index < titles.count else { return }
-        collectionNode.selectItem(
-            at: IndexPath(item: index, section: 0),
-            animated: true,
-            scrollPosition: .centeredHorizontally
-        )
+        DispatchQueue.main.async {
+            self.collectionNode.selectItem(
+                at: IndexPath(item: index, section: 0),
+                animated: false,
+                scrollPosition: .centeredHorizontally
+            )
+        }
     }
     
     internal func setIndicatorPosition(with offset: CGFloat) {

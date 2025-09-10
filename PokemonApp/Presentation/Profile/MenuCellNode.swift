@@ -16,7 +16,8 @@ final class MenuCellNode: BaseCellNode {
         selectionStyle = .none
         accessoryType = .disclosureIndicator
         backgroundColor = .systemBackground
-        iconNode.image = icon?.resized(to: icon?.size ?? .zero, tint: tint)
+        iconNode.imageModificationBlock = ASImageNodeTintColorModificationBlock(tint ?? .label)
+        iconNode.image = icon
         iconNode.style.preferredSize = CGSize(width: 22, height: 22)
         titleNode.attributedText = NSAttributedString(
             string: title.orEmpty,

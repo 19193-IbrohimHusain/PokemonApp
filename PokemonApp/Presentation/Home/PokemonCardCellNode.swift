@@ -6,7 +6,6 @@
 //
 
 import AsyncDisplayKit
-import UIKit
 
 final class PokemonCardCellNode: BaseCellNode {
     private let bgNode = ASDisplayNode().configure {
@@ -33,6 +32,7 @@ final class PokemonCardCellNode: BaseCellNode {
     
     private let favoriteBtn = ASButtonNode().configure {
         $0.style.preferredSize = CGSizeMake(26, 24)
+        $0.imageNode.imageModificationBlock = ASImageNodeTintColorModificationBlock(.systemRed)
     }
     
     private let collectionNode = ASCollectionNode(
@@ -80,8 +80,8 @@ final class PokemonCardCellNode: BaseCellNode {
         )
         
         let image = isFavorite ? SFSymbols.favoriteFilled : SFSymbols.favorite
-        let processedImage = image?.resized(to: CGSizeMake(26, 22), tint: .systemRed)
-        favoriteBtn.setImage(processedImage, for: .normal)
+        let config = UIImage.SymbolConfiguration(pointSize: 22)
+        favoriteBtn.setImage(image?.withConfiguration(config), for: .normal)
         
         favoriteBtn.addTarget(
             self,

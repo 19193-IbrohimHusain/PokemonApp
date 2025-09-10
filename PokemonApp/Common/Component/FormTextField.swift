@@ -38,7 +38,7 @@ final class FormTextField: UITextField {
     private func setupTextField() {
         setBorder(1, color: .systemGray4)
         font = .systemFont(ofSize: 14, weight: .regular)
-        backgroundColor = .white
+        backgroundColor = .systemBackground
         setCornerRadius(radius: 12)
         autocorrectionType = .no
         autocapitalizationType = .none

@@ -5,10 +5,9 @@
 //  Created by Ibrohim Husain on 16/08/25.
 //
 
-import UIKit
-import SnapKit
+import AsyncDisplayKit
 
-final class EditProfileViewController: BaseViewController {
+final class EditProfileViewController: BaseASDKViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .blue

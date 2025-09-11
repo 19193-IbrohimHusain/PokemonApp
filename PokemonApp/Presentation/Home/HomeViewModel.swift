@@ -10,6 +10,7 @@ import RxSwift
 final class HomeViewModel: BaseViewModel {
     private let useCase: PokemonUseCase
     private var offset = 0
+    private var cachedPokemonList = [PokemonDetailModel]()
     internal var pokemonList = [PokemonDetailModel]()
     internal let insertRowSubject = PublishSubject<[IndexPath]>()
     internal let cachePokemonListSubject = PublishSubject<Void>()
@@ -31,6 +32,9 @@ final class HomeViewModel: BaseViewModel {
                 self.cachePokemonListSubject.onNext(())
             }, onFailure: { [weak self] _ in
                 guard let self = self else { return }
+                if self.cachedPokemonList.isEmpty {
+                    self.cachedPokemonList = self.useCase.fetchListPokemonCache()
+                }
                 self.fetchAndSliceListPokemonCache(limit: limit, offset: offset)
             })
             .disposed(by: disposeBag)
@@ -48,6 +52,7 @@ final class HomeViewModel: BaseViewModel {
             .debounce(.milliseconds(1000), scheduler: MainScheduler.instance)
             .subscribe(onNext: { [weak self] in
                 guard let self = self else { return }
+                self.cachedPokemonList = []
                 self.savePokemonCache()
             })
             .disposed(by: disposeBag)
@@ -61,18 +66,11 @@ final class HomeViewModel: BaseViewModel {
     }
     
     private func fetchAndSliceListPokemonCache(limit: Int, offset: Int) {
-        Single.just(useCase.fetchListPokemonCache())
-            .subscribe(on: ConcurrentDispatchQueueScheduler(qos: .background))
-            .observe(on: MainScheduler.instance)
-            .subscribe(onSuccess: { [weak self] in
-                guard let self = self else { return }
-                let slice = sliceListPokemonCache(for: limit, offset: self.offset, cache: $0)
-                self.pokemonList.append(contentsOf: slice)
-                self.loadingState.onNext(slice.isEmpty ? .failed : .finished)
-                guard !slice.isEmpty else { return }
-                self.insertRowToTableView(at: offset)
-            })
-            .disposed(by: disposeBag)
+        let slice = sliceListPokemonCache(for: limit, offset: self.offset, cache: cachedPokemonList)
+        self.pokemonList.append(contentsOf: slice)
+        self.loadingState.onNext(slice.isEmpty ? .failed : .finished)
+        guard !slice.isEmpty else { return }
+        self.insertRowToTableView(at: offset)
     }
     
     private func sliceListPokemonCache(

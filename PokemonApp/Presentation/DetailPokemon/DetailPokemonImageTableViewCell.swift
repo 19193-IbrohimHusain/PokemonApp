@@ -112,10 +112,15 @@ final class DetailPokemonImageTableViewCell: BaseTableViewCell {
             pokemonImage.image = UIImage(named: "Pokeball")
             return
         }
+        let imgWidth = Screen.width - 100 - 100
+        let processor = DownsamplingImageProcessor(size: CGSizeMake(imgWidth, imgWidth))
         let options: KingfisherOptionsInfo = [
-            .cacheOriginalImage,
             .memoryCacheExpiration(.seconds(600)),
-            .transition(.fade(0.3))
+            .cacheMemoryOnly,
+            .fromMemoryCacheOrRefresh,
+            .transition(.fade(0.3)),
+            .processor(processor),
+            .scaleFactor(UIScreen.main.scale)
         ]
         pokemonImage.kf.setImage(with: url, options: options)
     }

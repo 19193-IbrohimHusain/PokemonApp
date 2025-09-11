@@ -151,10 +151,14 @@ final class PokemonCardTableViewCell: BaseTableViewCell {
             pokemonImage.image = UIImage(named: "Pokeball")
             return
         }
+        let processor = DownsamplingImageProcessor(size: CGSizeMake(150, bounds.height))
         let options: KingfisherOptionsInfo = [
-            .cacheOriginalImage,
             .memoryCacheExpiration(.seconds(600)),
-            .transition(.fade(0.3))
+            .cacheMemoryOnly,
+            .fromMemoryCacheOrRefresh,
+            .transition(.fade(0.3)),
+            .processor(processor),
+            .scaleFactor(UIScreen.main.scale)
         ]
         pokemonImage.kf.setImage(with: url, options: options)
     }

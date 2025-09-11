@@ -93,6 +93,10 @@ final class PokemonCardCellNode: BaseCellNode {
         collectionNode.delegate = self
         
         guard let urlStr = data.sprites.frontDefault, let url = URL(string: urlStr) else { return }
+        pokemonImage.imageModificationBlock = { [weak self] image, _ in
+            guard let self = self else { return image }
+            return image.downsampled(to: self.pokemonImage.calculatedSize, scale: UIScreen.main.scale)
+        }
         pokemonImage.setURL(url, resetToDefault: true)
     }
     

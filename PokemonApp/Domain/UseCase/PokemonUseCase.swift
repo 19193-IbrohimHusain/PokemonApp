@@ -10,6 +10,7 @@ import RxSwift
 protocol PokemonUseCase {
     func fetchListPokemon(limit: Int, offset: Int) -> Single<[PokemonDetailModel]>
     func fetchListPokemonCache() -> [PokemonDetailModel]
+    func savePokemonList(_ pokemon: [PokemonDetailModel]) -> Single<Bool>
     func fetchDetailPokemon(of name: String) -> Single<PokemonDetailModel>
     func fetchPokemonSpecies(of name: String) -> Single<PokemonSpecies>
     func fetchPokemonType(for type: String) -> Single<PokemonType>
@@ -32,6 +33,10 @@ final class PokemonUseCaseImpl: PokemonUseCase {
     
     func fetchListPokemonCache() -> [PokemonDetailModel] {
         repository.fetchListPokemonCache()
+    }
+    
+    func savePokemonList(_ pokemon: [PokemonDetailModel]) -> Single<Bool> {
+        repository.savePokemonList(pokemon)
     }
     
     func fetchDetailPokemon(of name: String) -> Single<PokemonDetailModel> {

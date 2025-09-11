@@ -43,6 +43,8 @@ final class HomeViewController: BaseViewController {
     }
     
     private func bindEvent() {
+        viewModel.observeCachePokemonList()
+
         viewModel.loadingState
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] in

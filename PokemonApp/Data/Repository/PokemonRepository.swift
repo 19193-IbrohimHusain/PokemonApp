@@ -10,6 +10,7 @@ import RxSwift
 protocol PokemonDataSource {
     func fetchListPokemon(limit: Int, offset: Int) -> Single<[PokemonDetailModel]>
     func fetchListPokemonCache() -> [PokemonDetailModel]
+    func savePokemonList(_ pokemon: [PokemonDetailModel]) -> Single<Bool>
     func fetchDetailPokemon(of name: String) -> Single<PokemonDetailModel>
     func fetchPokemonSpecies(of name: String) -> Single<PokemonSpecies>
     func fetchPokemonType(for type: String) -> Single<PokemonType>
@@ -42,30 +43,26 @@ final class PokemonRepository: PokemonDataSource {
             .listPokemon(limit: limit, offset: offset),
             timeout: 60
         )
-        
-        var cache = fetchListPokemonCache()
-        var seen = Set(cache)
-        
+                
         return list.map { $0.results.map(\.name) }
             .flatMap { [weak self] names -> Single<[PokemonDetailModel]> in
                 guard let self = self else { return Single.never() }
                 let detailSingles = names.map { self.fetchDetailPokemon(of: $0) }
                 return Single.zip(detailSingles)
             }
-            .do(onSuccess: { [weak self] in
-                guard let self = self else { return }
-                do {
-                    let additions = $0.filter { seen.insert($0).inserted }
-                    guard !additions.isEmpty else { return }
-                    cache.append(contentsOf: additions)
-                    try self.listDb.saveList(of: cache)
-                } catch {}
-            })
-            .catch { [weak self] in
-                guard let self = self else { return .error($0) }
-                let slice = sliceListPokemonCache(for: limit, offset: offset, cache: cache)
-                return slice.isEmpty ? .error($0) : .just(slice)
+    }
+    
+    func savePokemonList(_ pokemon: [PokemonDetailModel]) -> Single<Bool> {
+        Single.create { [weak self] single in
+            guard let self = self else { return Disposables.create() }
+            do {
+                try listDb.saveList(of: pokemon)
+                single(.success(true))
+            } catch {
+                single(.failure(error))
             }
+            return Disposables.create()
+        }
     }
     
     func fetchListPokemonCache() -> [PokemonDetailModel] {

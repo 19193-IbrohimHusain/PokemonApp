@@ -18,7 +18,7 @@ final class MenuCellNode: BaseCellNode {
         backgroundColor = .systemBackground
         iconNode.imageModificationBlock = ASImageNodeTintColorModificationBlock(tint ?? .label)
         iconNode.image = icon
-        iconNode.style.preferredSize = CGSize(width: 22, height: 22)
+        iconNode.style.preferredSize = CGSizeMake(22, 22)
         titleNode.attributedText = NSAttributedString(
             string: title.orEmpty,
             attributes: [

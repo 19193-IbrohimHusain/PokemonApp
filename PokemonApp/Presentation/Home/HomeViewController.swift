@@ -98,7 +98,7 @@ extension HomeViewController: ASTableDataSource {
 
 extension HomeViewController: ASTableDelegate {
     func tableNode(_ tableNode: ASTableNode, willDisplayRowWith node: ASCellNode) {
-        guard node.indexPath?.row == viewModel.pokemonList.count - 1 else { return }
+        guard node.indexPath?.row == viewModel.pokemonList.count - 2 else { return }
         viewModel.fetchPokemonList()
     }
     

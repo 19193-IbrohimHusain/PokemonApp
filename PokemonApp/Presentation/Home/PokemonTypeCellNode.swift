@@ -25,7 +25,7 @@ final class PokemonTypeCellNode: BaseCellNode {
         backgroundColor = background
         cornerRadius = 12
         shadowColor = UIColor.black.cgColor
-        shadowOffset = CGSize(width: 0, height: 2)
+        shadowOffset = CGSizeMake(0, 2)
         shadowRadius = 2
         shadowOpacity = 0.3
     }
@@ -33,6 +33,9 @@ final class PokemonTypeCellNode: BaseCellNode {
     override func didLoad() {
         super.didLoad()
         layer.masksToBounds = false
+        layer.shadowPath = UIBezierPath(roundedRect: frame, cornerRadius: 12).cgPath
+        layer.shouldRasterize = true
+        layer.rasterizationScale = UIScreen.main.scale
     }
     
     override func layoutSpecThatFits(_ constrainedSize: ASSizeRange) -> ASLayoutSpec {

@@ -11,6 +11,7 @@ import Combine
 final class HomeViewModel: BaseViewModel {
     private let useCase: PokemonUseCase
     private var offset = 0
+    private var cachedPokemonList = [PokemonDetailModel]()
     internal var pokemonList = [PokemonDetailModel]()
     internal let insertRowSubject = PassthroughSubject<[IndexPath], Never>()
     internal let cachePokemonListSubject = PassthroughSubject<Void, Never>()
@@ -30,6 +31,9 @@ final class HomeViewModel: BaseViewModel {
                 case .finished:
                     self.loadingState.send(.finished)
                 case .failure:
+                    if self.cachedPokemonList.isEmpty {
+                        self.cachedPokemonList = self.useCase.fetchListPokemonCache()
+                    }
                     self.fetchAndSliceListPokemonCache(limit: limit, offset: offset)
                 }
             } receiveValue: { [weak self] in
@@ -51,30 +55,28 @@ final class HomeViewModel: BaseViewModel {
     internal func observeCachePokemonList() {
         cachePokemonListSubject
             .debounce(for: .milliseconds(1000), scheduler: RunLoop.main)
-            .flatMap { [weak self] in
-                guard let self = self else { return Just(false).eraseToAnyPublisher() }
-                return self.useCase.savePokemonList(self.pokemonList)
-                    .subscribe(on: backgroundQueue)
-                    .replaceError(with: false)
-                    .eraseToAnyPublisher()
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                self.cachedPokemonList = []
+                self.savePokemonCache()
             }
+            .store(in: &cancellables)
+    }
+    
+    private func savePokemonCache() {
+        useCase.savePokemonList(pokemonList)
+            .subscribe(on: backgroundQueue)
+            .replaceError(with: false)
             .sink { _ in }
             .store(in: &cancellables)
     }
     
     private func fetchAndSliceListPokemonCache(limit: Int, offset: Int) {
-        Just(useCase.fetchListPokemonCache())
-            .subscribe(on: backgroundQueue)
-            .receive(on: RunLoop.main)
-            .sink { [weak self] in
-                guard let self = self else { return }
-                let slice = sliceListPokemonCache(for: limit, offset: self.offset, cache: $0)
-                self.pokemonList.append(contentsOf: slice)
-                self.loadingState.send(slice.isEmpty ? .failed : .finished)
-                guard !slice.isEmpty else { return }
-                self.insertRowToTableView(at: offset)
-            }
-            .store(in: &cancellables)
+        let slice = sliceListPokemonCache(for: limit, offset: self.offset, cache: cachedPokemonList)
+        self.pokemonList.append(contentsOf: slice)
+        self.loadingState.send(slice.isEmpty ? .failed : .finished)
+        guard !slice.isEmpty else { return }
+        self.insertRowToTableView(at: offset)
     }
     
     private func sliceListPokemonCache(

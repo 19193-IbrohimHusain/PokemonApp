@@ -64,8 +64,7 @@ final class NetworkManager: NetworkRequest {
         config.timeoutIntervalForResource = timeout
         let session = URLSession(configuration: config)
         return session.dataTaskPublisher(for: request)
-            .tryMap { [weak self] in
-                guard let _ = self else { throw NetworkError.noHTTPResponse }
+            .tryMap {
                 guard let http = $1 as? HTTPURLResponse else {
                     throw NetworkError.noHTTPResponse
                 }
@@ -81,4 +80,3 @@ final class NetworkManager: NetworkRequest {
             .eraseToAnyPublisher()
     }
 }
-

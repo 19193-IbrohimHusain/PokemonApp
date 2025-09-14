@@ -39,7 +39,10 @@ final class PokemonRepository: PokemonDataSource {
     }
     
     func fetchListPokemon(limit: Int, offset: Int) -> AnyPublisher<[PokemonDetailModel], Error> {
-        let list: AnyPublisher<PokemonResponse, Error> = manager.fetchDecodable(.listPokemon(limit: limit, offset: offset), timeout: 60)
+        let list: AnyPublisher<PokemonResponse, Error> = manager.fetchDecodable(
+            .listPokemon(limit: limit, offset: offset),
+            timeout: 60
+        )
         
         return list
             .map { $0.results.map(\.name) }

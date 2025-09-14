@@ -9,8 +9,10 @@ import AsyncDisplayKit
 import Combine
 
 final class SearchViewController: BaseASDKViewController {
-    private let searchBar = UISearchBar().configure {
-        $0.placeholder = "Pokemon Name"
+    private let searchController = UISearchController().configure {
+        $0.searchBar.placeholder = "Pokemon Name"
+        $0.hidesNavigationBarDuringPresentation = false
+        $0.automaticallyShowsCancelButton = false
     }
     
     private let tableNode = ASTableNode().configure {
@@ -25,22 +27,14 @@ final class SearchViewController: BaseASDKViewController {
     
     override func configNode() {
         navigationItem.title = "Search Pokemon"
+        navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = false
         node.backgroundColor = .systemBackground
         tableNode.dataSource = self
         tableNode.delegate = self
         node.layoutSpecBlock = { [weak self] node,_ in
             guard let self = self else { return ASLayoutSpec() }
-            let searchNode = ASDisplayNode { self.searchBar }
-            searchNode.style.height = ASDimensionMake(44)
-            let insetSearch = ASInsetLayoutSpec(insets: .init(top: 0, left: 16, bottom: 0, right: 16), child: searchNode)
-            let stack = ASStackLayoutSpec(
-                direction: .vertical,
-                spacing: 0,
-                justifyContent: .start,
-                alignItems: .stretch,
-                children: [insetSearch, self.tableNode]
-            )
-            return ASInsetLayoutSpec(insets: .init(top: node.safeAreaInsets.top, left: 0, bottom: 0, right: 0), child: stack)
+            return ASInsetLayoutSpec(insets: .zero, child: self.tableNode)
         }
     }
     
@@ -68,7 +62,7 @@ final class SearchViewController: BaseASDKViewController {
         
         NotificationCenter.default.publisher(
             for: UITextField.textDidChangeNotification,
-            object: searchBar.searchTextField
+            object: searchController.searchBar.searchTextField
         )
         .map { ($0.object as? UISearchTextField)?.text }
         .receive(on: RunLoop.main)
@@ -108,8 +102,8 @@ extension SearchViewController: ASTableDataSource {
 }
 
 extension SearchViewController: ASTableDelegate {
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        searchBar.resignFirstResponder()
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        searchController.searchBar.resignFirstResponder()
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

@@ -34,12 +34,14 @@ final class HomeViewModel: BaseViewModel {
                     if self.cachedPokemonList.isEmpty {
                         self.cachedPokemonList = self.useCase.fetchListPokemonCache()
                     }
-                    self.fetchAndSliceListPokemonCache(limit: limit, offset: offset)
+                    self.fetchAndSliceListPokemonCache(limit: limit)
                 }
             } receiveValue: { [weak self] in
                 guard let self else { return }
                 self.pokemonList.append(contentsOf: $0)
-                self.insertRowToTableView(at: offset)
+                self.loadingState.send(.finished)
+                guard !$0.isEmpty else { return }
+                self.insertRowToTableView(at: $0.count)
                 self.cachePokemonListSubject.send(())
             }
             .store(in: &cancellables)
@@ -55,7 +57,7 @@ final class HomeViewModel: BaseViewModel {
     internal func observeCachePokemonList() {
         cachePokemonListSubject
             .debounce(for: .milliseconds(1000), scheduler: RunLoop.main)
-            .sink { [weak self] _ in
+            .sink { [weak self] in
                 guard let self = self else { return }
                 self.cachedPokemonList = []
                 self.savePokemonCache()
@@ -71,12 +73,12 @@ final class HomeViewModel: BaseViewModel {
             .store(in: &cancellables)
     }
     
-    private func fetchAndSliceListPokemonCache(limit: Int, offset: Int) {
+    private func fetchAndSliceListPokemonCache(limit: Int) {
         let slice = sliceListPokemonCache(for: limit, offset: self.offset, cache: cachedPokemonList)
         self.pokemonList.append(contentsOf: slice)
         self.loadingState.send(slice.isEmpty ? .failed : .finished)
         guard !slice.isEmpty else { return }
-        self.insertRowToTableView(at: offset)
+        self.insertRowToTableView(at: slice.count)
     }
     
     private func sliceListPokemonCache(

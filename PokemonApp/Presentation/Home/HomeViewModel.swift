@@ -27,15 +27,16 @@ final class HomeViewModel: BaseViewModel {
             .subscribe(onSuccess: { [weak self] in
                 guard let self = self else { return }
                 self.pokemonList.append(contentsOf: $0)
-                self.insertRowToTableView(at: offset)
                 self.loadingState.onNext(.finished)
+                guard !$0.isEmpty else { return }
+                self.insertRowToTableView(at: $0.count)
                 self.cachePokemonListSubject.onNext(())
             }, onFailure: { [weak self] _ in
                 guard let self = self else { return }
                 if self.cachedPokemonList.isEmpty {
                     self.cachedPokemonList = self.useCase.fetchListPokemonCache()
                 }
-                self.fetchAndSliceListPokemonCache(limit: limit, offset: offset)
+                self.fetchAndSliceListPokemonCache(limit: limit)
             })
             .disposed(by: disposeBag)
     }
@@ -65,12 +66,12 @@ final class HomeViewModel: BaseViewModel {
             .disposed(by: disposeBag)
     }
     
-    private func fetchAndSliceListPokemonCache(limit: Int, offset: Int) {
+    private func fetchAndSliceListPokemonCache(limit: Int) {
         let slice = sliceListPokemonCache(for: limit, offset: self.offset, cache: cachedPokemonList)
         self.pokemonList.append(contentsOf: slice)
         self.loadingState.onNext(slice.isEmpty ? .failed : .finished)
         guard !slice.isEmpty else { return }
-        self.insertRowToTableView(at: offset)
+        self.insertRowToTableView(at: slice.count)
     }
     
     private func sliceListPokemonCache(

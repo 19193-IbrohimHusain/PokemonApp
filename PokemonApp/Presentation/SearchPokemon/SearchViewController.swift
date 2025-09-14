@@ -11,8 +11,10 @@ import RxSwift
 import RxCocoa
 
 final class SearchViewController: BaseViewController {
-    private let searchBar = UISearchBar().configure {
-        $0.placeholder = "Pokemon Name"
+    private let searchController = UISearchController().configure {
+        $0.searchBar.placeholder = "Pokemon Name"
+        $0.hidesNavigationBarDuringPresentation = false
+        $0.automaticallyShowsCancelButton = false
     }
     
     private let tableView = UITableView().configure {
@@ -26,30 +28,22 @@ final class SearchViewController: BaseViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupView()
-        setConstraint()
         bindEvent()
         viewModel.fetchPokemonListFromCache()
     }
     
     private func setupView() {
         navigationItem.title = "Search Pokemon"
+        navigationItem.searchController = searchController
+        navigationItem.hidesSearchBarWhenScrolling = false
         view.backgroundColor = .systemBackground
-        view.addSubviews(tableView, searchBar)
+        view.addSubview(tableView)
         
         tableView.dataSource = self
         tableView.delegate = self
         tableView.registerCell(PokemonCardTableViewCell.self)
-    }
-    
-    private func setConstraint() {
-        searchBar.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide)
-            $0.height.equalTo(44)
-            $0.horizontalEdges.equalToSuperview().inset(16)
-        }
         tableView.snp.makeConstraints {
-            $0.top.equalTo(searchBar.snp.bottom)
-            $0.horizontalEdges.bottom.equalToSuperview()
+            $0.edges.equalToSuperview()
         }
     }
     
@@ -69,7 +63,7 @@ final class SearchViewController: BaseViewController {
             })
             .disposed(by: disposeBag)
         
-        searchBar.rx.text
+        searchController.searchBar.rx.text
             .observe(on: MainScheduler.instance)
             .bind(to: viewModel.searchQuery)
             .disposed(by: disposeBag)
@@ -105,8 +99,8 @@ extension SearchViewController: UITableViewDataSource {
 }
 
 extension SearchViewController: UITableViewDelegate {
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        searchBar.resignFirstResponder()
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        searchController.searchBar.resignFirstResponder()
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {

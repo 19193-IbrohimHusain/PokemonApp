@@ -18,8 +18,7 @@ final class NetworkManager: NetworkRequest {
     private init() {}
     
     func fetchDecodable<T: Decodable>(_ endpoint: Endpoint, timeout: TimeInterval = 60) -> Single<T> {
-        Single.create { [weak self] single in
-            guard let _ = self else { return Disposables.create() }
+        Single.create { single in
             let request = AF.request(
                 endpoint.fullPath,
                 method: endpoint.method,

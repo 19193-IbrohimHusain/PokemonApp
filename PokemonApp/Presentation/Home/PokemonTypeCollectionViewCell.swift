@@ -22,6 +22,9 @@ final class PokemonTypeCollectionViewCell: BaseCollectionViewCell {
         shadowOffset = CGSizeMake(0, 2)
         shadowRadius = 2
         shadowOpacity = 0.3
+        layer.shouldRasterize = true
+        layer.rasterizationScale = UIScreen.main.scale
+        layer.shadowPath = UIBezierPath(roundedRect: bounds, cornerRadius: 12).cgPath
         titleLabel.snp.makeConstraints {
             $0.verticalEdges.equalToSuperview().inset(4)
             $0.horizontalEdges.equalToSuperview().inset(8)

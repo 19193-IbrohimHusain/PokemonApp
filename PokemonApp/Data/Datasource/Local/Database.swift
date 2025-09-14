@@ -38,6 +38,7 @@ fileprivate enum Key: String {
     case email, username, password
     case pokemonList = "pokemon::list"
     case pokemonAbilities, pokemonName, pokemonImage
+    case createdAt
 }
 
 enum DBError: Error {
@@ -168,6 +169,7 @@ extension DatabaseManager: FavoritePokemonDataBase {
     func saveFavoritePokemon(of user: String, value: PokemonDetailModel) throws {
         let dict = try value.toDictionary()
         let doc  = MutableDocument(id: favDocID(for: user, pokemonName: value.name.lowercased()), data: dict)
+            .setDate(Date(), forKey: .createdAt)
         try db.defaultCollection().save(document: doc)
     }
     
@@ -232,6 +234,11 @@ extension MutableDocument {
     @discardableResult
     final fileprivate func setInt(_ value: Int, forKey key: Key) -> Self {
         setInt(value, forKey: key.rawValue)
+    }
+    
+    @discardableResult
+    final fileprivate func setDate(_ value: Date?, forKey key: Key) -> Self {
+        setDate(value, forKey: key.rawValue)
     }
 }
 

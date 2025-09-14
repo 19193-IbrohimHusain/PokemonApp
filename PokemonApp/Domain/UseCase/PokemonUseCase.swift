@@ -10,6 +10,7 @@ import Combine
 protocol PokemonUseCase {
     func fetchListPokemon(limit: Int, offset: Int) -> AnyPublisher<[PokemonDetailModel], Error>
     func fetchListPokemonCache() -> [PokemonDetailModel]
+    func savePokemonList(_ pokemon: [PokemonDetailModel]) -> AnyPublisher<Bool, Error>
     func fetchDetailPokemon(of name: String) -> AnyPublisher<PokemonDetailModel, Error>
     func fetchPokemonSpecies(of name: String) -> AnyPublisher<PokemonSpecies, Error>
     func fetchPokemonType(for type: String) -> AnyPublisher<PokemonType, Error>
@@ -32,6 +33,10 @@ final class PokemonUseCaseImpl: PokemonUseCase {
     
     func fetchListPokemonCache() -> [PokemonDetailModel] {
         repository.fetchListPokemonCache()
+    }
+    
+    func savePokemonList(_ pokemon: [PokemonDetailModel]) -> AnyPublisher<Bool, Error> {
+        repository.savePokemonList(pokemon)
     }
     
     func fetchDetailPokemon(of name: String) -> AnyPublisher<PokemonDetailModel, Error> {

@@ -56,7 +56,7 @@ final class RegisterViewController: BaseViewController {
         $0.setTitleColor(.white, for: .normal)
         $0.setTitle("Sign Up", for: .normal)
         $0.setCornerRadius(radius: 12)
-        $0.setBorder(1, color: .white)
+        $0.setBorder(1, color: .systemBackground)
         $0.backgroundColor = .systemBlue
     }
     
